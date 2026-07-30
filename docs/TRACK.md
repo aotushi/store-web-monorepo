@@ -7,8 +7,9 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：2 后端（PLAN §9.2）——脚手架 + 全局链路已落地并验证
-- **下一步**：auth + user/role/permission（RBAC 核心，JwtAuthGuard 全局 + @Public 豁免 + 滑动续期；swagger 从第一个模块写全）
+- **当前阶段**：2 后端（PLAN §9.2）——auth + RBAC 核心已上线并实测（登录/401/403/字段级 400/滑动续期全过）
+- **下一步**：user/role/permission 补全 CRUD（创建/编辑/删除/冻结，对照原接口路径）→ product/order/activity 业务模块
+- **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
 
@@ -37,7 +38,10 @@
 - [x] @nestjs/config + Joi fail-fast（PLAN §6.5）；TypeORM 连 docker mysql **3307**（synchronize:false）
 - [x] terminus `/api/health` + swagger `/api-docs`（裸类型，壳前端剥，PLAN §7#11）
 - [x] 验证：health 探活 database:up、404 失败壳对称、swagger 200
-- [ ] auth + user/role/permission（RBAC 核心）
+- [x] auth 核心：登录（bcryptjs + select:false）、全局 JwtAuthGuard + @Public、滑动续期（临期重签放响应头，实测触发）
+- [x] RBAC 核心：@RequirePermission(code) + PermissionGuard（声明式，替代原 permission_api url 匹配）；三实体映射既有表
+- [x] 实测矩阵 9 项：login 200/401、空表单 400 字段级数组、currentUser 401/200（roles+perms）、permission/list 超管 200 / 服务员 403
+- [ ] user/role/permission 补全 CRUD（创建/编辑/删除/冻结/分配）
 - [ ] product/order/activity
 - [ ] common 横切（logger/mail/redis/excel）
 - [ ] schedule/上传
@@ -54,11 +58,15 @@
 | ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | 2026-07-30 | 0.5h  | 骨架期开工：监控文档三件套、git init、workspace、工程化两道闸、docker-compose 起库并验证                                                            | 骨架完成（待提交）          |
 | 2026-07-30 | 1h    | 首次提交 + 建远程仓库（aotushi）；后端开工：NestJS 11 脚手架、响应壳/异常/校验全局链路、config Joi、TypeORM 连 3307、health+swagger，起服务实测通过 | 后端骨架上线（feat commit） |
+| 2026-07-30 | 1.5h  | 仓库更名 store-web-monorepo（compose 项目名解耦）；auth+RBAC：JWT 登录、全局双守卫、滑动续期、三实体映射，9 项实测 + 续期响应头实证                 | RBAC 核心上线               |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
-| 日期       | 决策                                                                          | 理由                                                      |
-| ---------- | ----------------------------------------------------------------------------- | --------------------------------------------------------- |
-| 2026-07-30 | dev 启动形态：**混合式**——mysql/redis 进 docker 常驻，前后端本机 `pnpm dev`   | HMR/调试直挂；Windows bind mount 文件监听差；生产才全容器 |
-| 2026-07-30 | MySQL 宿主端口 **3307**（容器内仍 3306）                                      | 本机 mysqld.exe 服务占 3306（ISSUES #1）；不动系统服务    |
-| 2026-07-30 | 库名沿用原 dump `store_web_project`；compose 内置默认凭据，clone 后零配置可起 | 贴原项目 + 降低上手摩擦；密码可 .env 覆盖                 |
+| 日期       | 决策                                                                          | 理由                                                                                               |
+| ---------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 2026-07-30 | dev 启动形态：**混合式**——mysql/redis 进 docker 常驻，前后端本机 `pnpm dev`   | HMR/调试直挂；Windows bind mount 文件监听差；生产才全容器                                          |
+| 2026-07-30 | MySQL 宿主端口 **3307**（容器内仍 3306）                                      | 本机 mysqld.exe 服务占 3306（ISSUES #1）；不动系统服务                                             |
+| 2026-07-30 | 库名沿用原 dump `store_web_project`；compose 内置默认凭据，clone 后零配置可起 | 贴原项目 + 降低上手摩擦；密码可 .env 覆盖                                                          |
+| 2026-07-30 | 认证自写 JwtAuthGuard（@nestjs/jwt），**不上 passport** 全家桶                | 代码更薄、原理透明（学习价值）；原项目对照性由表结构与接口路径保证                                 |
+| 2026-07-30 | 密码库用 **bcryptjs**（纯 JS）替代 bcrypt（native）                           | pnpm 10 默认拦第三方 build script，native 编译在 Windows 多一层坑；hash 格式 $2a$ 完全兼容种子数据 |
+| 2026-07-30 | `currentUser` 不挂权限码（登录即可）；原项目把它挂 UserManage 下              | 低权限角色登录后必须能取到自己的信息与菜单，原配置属实现瑕疵                                       |

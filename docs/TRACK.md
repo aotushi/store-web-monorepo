@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：2 后端（PLAN §9.2）——user/role CRUD 已上线并实测（25 项矩阵全过：注册/分页/角色分配/冻结/删除/事务清中间表/超管旁路/按钮码正反向）
-- **下一步**：product/order/activity 业务模块 → common 横切（logger/mail/redis/excel）
+- **当前阶段**：2 后端（PLAN §9.2）——product/order/activity 业务模块已上线并实测（32 项矩阵全过：金额快照/状态机四路/引用拒删/时间窗推导/按钮码正反向）
+- **下一步**：common 横切（logger/mail/redis/excel）→ schedule/上传（product/import 挂账在此）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -44,9 +44,12 @@
 - [x] user/role CRUD：注册（开放）、list 分页+模糊搜索、编辑（资料+角色/权限点整体替换）、冻结（禁自冻）、删除（禁自删、isSystem 禁删、事务清中间表）；permission 只读（权限点与代码 @RequirePermission 同源，不提供写接口）
 - [x] PermissionGuard 补 userType=0 超管旁路（种子数据超管角色只挂页面码，按钮码全在低权角色上——原项目隐含设计）
 - [x] 实测矩阵 25 项：409 重名 / 400 弱密码 / 分页越界 / 无效 id / 自操作防御 / 401 冻结拦登录 / 403 按钮码反向 / 200 按钮码正向（服务员解冻）/ 删后中间表零孤儿
-- [ ] product/order/activity
+- [x] product：CRUD + updateStatus 上下架 + hot-list（复刻口径：已上架按更新时间倒序前 10，原表无销量字段）+ 被订单/活动引用拒删；decimal 列 transformer 转 number
+- [x] order：下单（须已上架、快照冗余字段、整数分位乘法防浮点误差、事务写 order_product）+ 状态机（0→1/0→2/1→2，取消终态）+ detail 组装商品 + 删除事务清关联表
+- [x] activity：CRUD + 时间窗校验（end>start、商品存在性）+ 状态按时间窗推导（create/edit 均重推）
+- [x] 实测矩阵 32 项：金额 76.5/67.32、状态机非法流转 400、引用拒删 400、test1 按钮码正向（hot-list/删活动）反向（product/order/activity 403）、order_product 零孤儿
 - [ ] common 横切（logger/mail/redis/excel）
-- [ ] schedule/上传
+- [ ] schedule/上传（含 /product/import excel 导入，原表挂 Home 权限点属种子瑕疵）
 
 ### 3 契约链路 ⏳ 未开始（openapi.json → orval）
 
@@ -62,6 +65,7 @@
 | 2026-07-30 | 1h    | 首次提交 + 建远程仓库（aotushi）；后端开工：NestJS 11 脚手架、响应壳/异常/校验全局链路、config Joi、TypeORM 连 3307、health+swagger，起服务实测通过 | 后端骨架上线（feat commit） |
 | 2026-07-30 | 1.5h  | 仓库更名 store-web-monorepo（compose 项目名解耦）；auth+RBAC：JWT 登录、全局双守卫、滑动续期、三实体映射，9 项实测 + 续期响应头实证                 | RBAC 核心上线               |
 | 2026-07-30 | 1h    | user/role CRUD：注册/分页/编辑/冻结/删除 + 关系整体替换 + 事务清中间表；踩出种子数据真相（超管无按钮码 → userType 旁路；roleId=4 孤儿行）           | CRUD 上线（25 项矩阵）      |
+| 2026-07-30 | 1h    | product/order/activity 三业务模块：金额整数分位乘法、订单状态机、活动时间窗推导、引用拒删、decimal transformer、分页基类                            | 业务模块上线（32 项矩阵）   |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -76,3 +80,6 @@
 | 2026-07-30 | PermissionGuard 增加 **userType=0 超管旁路**                                  | 种子数据实锤：超管角色只挂 8 个页面码，delete:user/freezed:user 反而在服务员身上，唯一自洽解释     |
 | 2026-07-30 | 删除接口改语义化 **DELETE /user/:id、/role/:id**（原 GET /delete/:id）        | GET 带副作用违背 HTTP 语义，可被爬虫/预取误触发；/user/edit 等无害路径保持原样以便对照             |
 | 2026-07-30 | permission 只读，不做增删改                                                   | 权限点与代码中 @RequirePermission 硬编码同源，运行时改表不改代码只会造成两边漂移                   |
+| 2026-07-30 | hot-list 口径：已上架按 updateTime 倒序前 10                                  | 原表无销量字段，原实现口径不可考；取"最近有动作的在售品"为合理近似，字段补齐留待订单统计           |
+| 2026-07-30 | 商品被订单/活动引用时**拒删**（400），不做级联/软删                           | 裸表无外键，级联删历史订单不可接受；软删要动表结构（violates synchronize:false 契约）              |
+| 2026-07-30 | 订单金额服务端计算：单价快照 × 数量，整数分位乘法                             | 金额绝不信任前端传值；JS 浮点 0.1×3≠0.3，分位取整后再除回是两位小数金额的最小正确解                |

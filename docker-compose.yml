@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: store-mysql
+    restart: unless-stopped
+    ports:
+      # 宿主 3306 被本机 mysqld.exe 服务占用，本项目统一走 3307（见 docs/ISSUES.md #1）
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-store123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-store_web_project}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次建卷时自动执行 sql/ 下脚本建表（重置：docker compose down -v 后重启）
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:7
+    container_name: store-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mysql-data:
+  redis-data:

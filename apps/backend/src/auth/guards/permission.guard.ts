@@ -25,8 +25,12 @@ export class PermissionGuard implements CanActivate {
     // @Public 路由无认证上下文，不做权限校验
     if (!user) return true;
 
-    const codes = await this.userService.getPermissionCodes(user.sub);
-    if (!codes.has(code)) throw new ForbiddenException('无权限执行该操作');
+    const info = await this.userService.getAuthInfo(user.sub);
+    // token 有效但用户已被删除
+    if (!info) throw new ForbiddenException('无权限执行该操作');
+    // userType=0 超级管理员旁路：种子数据里超管角色只挂页面权限点，按钮码靠此放行（原项目隐含设计）
+    if (info.userType === 0) return true;
+    if (!info.codes.has(code)) throw new ForbiddenException('无权限执行该操作');
     return true;
   }
 }

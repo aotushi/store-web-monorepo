@@ -1,0 +1,21 @@
+# CI 真门禁（钩子可被 --no-verify 绕过，见 PLAN §4.4）
+# 当前仅 check；test/build 待 apps 立起后补全
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check

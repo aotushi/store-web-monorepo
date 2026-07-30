@@ -1,0 +1,34 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { envValidationSchema } from './config/env.validation';
+import { HealthModule } from './health/health.module';
+
+@Module({
+  imports: [
+    // 配置中心：进程内唯一 process.env 入口，Joi 白名单 fail-fast（PLAN §6.5）
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'mysql',
+        host: config.get<string>('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get<string>('DB_USERNAME'),
+        password: config.get<string>('DB_PASSWORD'),
+        database: config.get<string>('DB_DATABASE'),
+        autoLoadEntities: true,
+        // 表结构以 sql/ 初始化脚本为准，禁止运行时同步（PLAN §6.4）
+        synchronize: false,
+        // 配合 compose healthcheck：中间件冷启动时的重连兜底
+        retryAttempts: 10,
+        retryDelay: 3000,
+      }),
+    }),
+    HealthModule,
+  ],
+})
+export class AppModule {}

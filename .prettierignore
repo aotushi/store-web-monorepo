@@ -1,0 +1,7 @@
+# prettier 只管样式/杂类文件（js/ts 归 Oxfmt，见 PLAN §4.1）
+node_modules/
+dist/
+build/
+coverage/
+pnpm-lock.yaml
+sql/

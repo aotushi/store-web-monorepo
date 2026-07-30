@@ -25,7 +25,7 @@
 - [x] CI 骨架（GitHub Actions：install + check）
 - [x] docker-compose：mysql:8（宿主 **3307**）+ redis:7 + healthcheck + sql 初始化挂载
 - [x] 验证：双容器 healthy、10 表 + 种子就位、`pnpm check` 绿、钩子路径已挂
-- [x] 首次提交（4 commits，conventional）+ 远程仓库 [aotushi/nestjs-store-web-backend](https://github.com/aotushi/nestjs-store-web-backend)（public，main 已跟踪）
+- [x] 首次提交（4 commits，conventional）+ 远程仓库 [aotushi/store-web-monorepo](https://github.com/aotushi/store-web-monorepo)（public，main 已跟踪；原名 nestjs-store-web-backend，2026-07-30 更名消除"仅后端"歧义）
 - [ ] `pnpm check` 接入 `vp check`（待 frontend 立起，§4.3 完整形态）
 - [ ] CI 补 test/build 步骤（待 apps 立起）
 - [ ] fresh clone 验证 `pnpm install` 是否自动触发 prepare 挂钩（本次是手动 `pnpm exec husky` 挂的）

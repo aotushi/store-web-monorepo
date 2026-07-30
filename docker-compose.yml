@@ -1,3 +1,6 @@
+# 固定 compose 项目名（默认取目录名——目录更名会导致卷前缀漂移、数据"丢失"，锁死解耦）
+name: store-web
+
 services:
   mysql:
     image: mysql:8

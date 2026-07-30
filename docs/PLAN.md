@@ -19,7 +19,7 @@
 | 决策点           | 结论                                                                                                                                                                                          |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 仓库形态         | monorepo，**pnpm workspace**，不上 Turborepo/Nx（两个包不需要，后续可加）                                                                                                                     |
-| 仓库位置         | `E:\code\github\resume\nestjs-store-web-backend`（本目录，git init 起步）                                                                                                                     |
+| 仓库位置         | `E:\code\github\resume\store-web-monorepo`（本目录，git init 起步）                                                                                                                           |
 | React            | **18**（与原项目同大版本，对照性最好；antd 5 原生支持区间 16–18，免 patch）                                                                                                                   |
 | React Compiler   | **开启**——全员禁手写 memo/useMemo/useCallback（评审争议点消灭）；React 18 需装 `react-compiler-runtime`（dependencies）+ 编译插件 `target: '18'`；与 Vite+ 转换链的兼容性骨架期验证，见 §7#10 |
 | 工具链           | **Vite+ (beta)**：`vp check` = Oxfmt + Oxlint + tsgolint 类型检查；`vp test` = Vitest                                                                                                         |
@@ -46,7 +46,7 @@
 ### 目录结构
 
 ```
-nestjs-store-web-backend/          # monorepo 根
+store-web-monorepo/                # monorepo 根
 ├── apps/
 │   ├── backend/                   # NestJS 11
 │   └── frontend/                  # React 19 admin

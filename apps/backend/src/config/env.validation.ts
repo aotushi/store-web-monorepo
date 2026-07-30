@@ -15,4 +15,9 @@ export const envValidationSchema = Joi.object({
 
   // 逗号分隔的 CORS 允许来源
   CORS_ORIGINS: Joi.string().default('http://localhost:5173'),
+
+  JWT_SECRET: Joi.string().min(16).required(),
+  JWT_EXPIRES_IN: Joi.string().default('2h'),
+  // 滑动续期阈值（秒）：剩余有效期低于该值时重签 token 放响应头
+  JWT_RENEW_THRESHOLD_S: Joi.number().default(1800),
 });

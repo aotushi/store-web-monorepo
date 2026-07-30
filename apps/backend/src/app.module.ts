@@ -1,8 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { PermissionGuard } from './auth/guards/permission.guard';
 import { envValidationSchema } from './config/env.validation';
 import { HealthModule } from './health/health.module';
+import { PermissionModule } from './permission/permission.module';
+import { RoleModule } from './role/role.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -29,6 +36,15 @@ import { HealthModule } from './health/health.module';
       }),
     }),
     HealthModule,
+    AuthModule,
+    UserModule,
+    RoleModule,
+    PermissionModule,
+  ],
+  providers: [
+    // 全局守卫，注册顺序即执行顺序：先认证（默认安全，@Public 豁免），后鉴权（@RequirePermission 声明式）
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionGuard },
   ],
 })
 export class AppModule {}

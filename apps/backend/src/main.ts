@@ -5,9 +5,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { createWinstonLogger } from './common/logger/winston.logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // 全应用日志统一走 winston：console 可读 + 文件按天轮转（PLAN §6.5）
+  const app = await NestFactory.create(AppModule, { logger: createWinstonLogger() });
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix(config.get<string>('API_PREFIX')!);

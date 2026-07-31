@@ -8,7 +8,8 @@ coverage/
 .env
 .env.*.local
 
-# 日志与系统文件
+# 日志与系统文件（logs/ 含 winston 轮转的 .audit.json，仅 *.log 盖不住）
+logs/
 *.log
 .DS_Store
 Thumbs.db

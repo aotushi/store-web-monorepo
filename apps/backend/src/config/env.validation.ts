@@ -20,4 +20,17 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('2h'),
   // 滑动续期阈值（秒）：剩余有效期低于该值时重签 token 放响应头
   JWT_RENEW_THRESHOLD_S: Joi.number().default(1800),
+
+  REDIS_HOST: Joi.string().default('127.0.0.1'),
+  REDIS_PORT: Joi.number().port().default(6379),
+  // 所有 redis key 统一业务前缀（ioredis keyPrefix 自动拼接，PLAN §6.5）
+  REDIS_KEY_PREFIX: Joi.string().default('store:'),
+
+  // SMTP 全部可选：未配 MAIL_HOST 时 MailService 降级 jsonTransport 假发送（本地开发）
+  MAIL_HOST: Joi.string().allow('').default(''),
+  MAIL_PORT: Joi.number().port().default(465),
+  MAIL_USER: Joi.string().allow('').default(''),
+  MAIL_PASS: Joi.string().allow('').default(''),
+  // 发件人展示名，缺省回落 MAIL_USER
+  MAIL_FROM: Joi.string().allow('').default(''),
 });

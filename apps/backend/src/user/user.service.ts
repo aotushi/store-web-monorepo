@@ -35,6 +35,11 @@ export class UserService {
       .getOne();
   }
 
+  // 忘记密码流程用；原表 email 无唯一约束，findOne 取首个匹配（生产应建唯一索引）
+  findByEmail(email: string): Promise<User | null> {
+    return this.userRepo.findOne({ where: { email } });
+  }
+
   // 当前用户 + 角色 + 权限点（前端登录后组装菜单/按钮权限的根接口）
   async getCurrentUser(id: number): Promise<CurrentUserVo> {
     const user = await this.userRepo.findOne({
@@ -100,6 +105,12 @@ export class UserService {
     });
     const saved = await this.userRepo.save(user);
     return { id: saved.id, username: saved.username };
+  }
+
+  // 重置密码：hash 策略与 createUser 一致（盐内嵌 + 冗余 salt 列兼容原表）
+  async resetPassword(id: number, newPassword: string): Promise<void> {
+    const salt = await genSalt(10);
+    await this.userRepo.update(id, { password: await hash(newPassword, salt), salt });
   }
 
   // 编辑资料 + 角色整体替换（save 级联同步 store_user_role 中间表）

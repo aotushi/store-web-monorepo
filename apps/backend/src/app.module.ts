@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,6 +7,8 @@ import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PermissionGuard } from './auth/guards/permission.guard';
+import { RequestLogMiddleware } from './common/middleware/request-log.middleware';
+import { RedisModule } from './common/redis/redis.module';
 import { envValidationSchema } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { OrderModule } from './order/order.module';
@@ -38,6 +41,7 @@ import { UserModule } from './user/user.module';
         retryDelay: 3000,
       }),
     }),
+    RedisModule,
     HealthModule,
     AuthModule,
     UserModule,
@@ -53,4 +57,9 @@ import { UserModule } from './user/user.module';
     { provide: APP_GUARD, useClass: PermissionGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // 请求摘要日志挂全路由（Express 5 通配符语法 {*splat}，'*' 已废弃）
+    consumer.apply(RequestLogMiddleware).forRoutes('{*splat}');
+  }
+}

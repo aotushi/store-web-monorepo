@@ -42,6 +42,12 @@
 - **ioredis 的 `keyPrefix` 只管"key 参数位"**：get/set/del 等命令的 key 参数自动拼前缀，但 `keys`/`scan` 的 pattern 是普通字符串参数不受管辖——带前缀架构下业务代码禁用 keys，运维排查时要手写全前缀
 - **winston-daily-rotate-file 会在日志目录生成 `.audit.json` 元数据**：gitignore 只写 `*.log` 盖不住，要按目录 `logs/` 级忽略
 - **nodemailer `jsonTransport` 是天然的本地降级方案**：不出网、sendMail 正常 resolve（返回序列化 JSON），未配 SMTP 时切它即可零配置跑通邮件链路；配合"正文不落日志"约束，验证码取证走 redis 实查而不是翻日志
+- **pnpm 严格隔离让 phantom dependency 在运行期而非编译期暴露**：multer 2.2.0 是 @nestjs/platform-express 的传递依赖，代码里显式 `import { diskStorage } from 'multer'`——tsc 通过（-D 装的 @types/multer 提供类型）、`nest build` 绿，`node dist/main.js` 才 MODULE_NOT_FOUND（require 解析不到藏在 `.pnpm` 里的实体包）；npm/yarn hoisting 会静默吞掉这个错误。规则：**显式 import 的包必须显式声明为直接依赖**
+- **Nest 文件上传的异常两条路**：multer 的 `LIMIT_FILE_SIZE` 由 FileInterceptor 的 transformException 转成 413（流式中断，不是收完再拒）；`fileFilter` 里 `cb(new BadRequestException(...), false)` 异常原样传播成 400——注意 Nest 声明的 fileFilter 回调类型要求两个参数，裸 multer 惯用的单参 `cb(err)` 编译不过
+- **serve-static 挂在 middleware 层 = 全局守卫覆盖不到**：ServeStaticModule 在 Express middleware 链上直接回文件，APP_GUARD 根本不参与——公开商品图是特性，但要意识到"全局守卫"并不真的封死所有 HTTP 出口；路径穿越由底层 send 库自带防护（`..%2F` 编码也会被规范化后拦截）
+- **exceljs 读 buffer 两个坑**：① 自带旧版 @types/node，其 `Buffer` 声明与新版本项目冲突（TS2345），按 `Parameters<Workbook['xlsx']['load']>[0]` 断言过桥；② `eachRow` 默认跳空行、`cell.value` 可能是 richText/公式对象，纯文本模板要 `String(value ?? '').trim()` 兜底
+- **TypeORM `save(实体数组)` 默认单事务**：多行导入"全对才入库"不需要手写 transaction，任一行失败整体回滚——原子性白拿
+- **容器数据库时区分裂**：mysqld 容器默认 UTC、应用/驱动写入按本机时区（+8）——对账 SQL 里用 `NOW()` 会拿 UTC 与本地时间落库值比较，判定全错；把 JS `new Date()` 作参数传进 SQL 才与业务写入同一时钟源。通用原则：跨系统比较时间，时钟源必须唯一
 
 ### 面试可讲
 
@@ -53,6 +59,8 @@
 - **删除策略三选一**：引用检查拒删（本项目：历史订单不可失联，最保守最正确）vs 级联删（业务上不可接受）vs 软删除 deleted_at（要动表结构，与"复刻既有表"契约冲突）；能按业务语义讲清为什么选哪个，比背概念有分量
 - **请求日志的"摘要 vs 全量"取舍**：原项目在拦截器里全量 `JSON.stringify` 响应体落日志——密码/token/验证码全进日志文件（安全事故面）、大响应拖慢请求、日志体积失控；改为摘要行（method/url/status/耗时/操作者），敏感信息**结构上**进不了日志而不是靠"记得脱敏"；为什么挂 middleware 而不是 interceptor 能引申讲 Nest 请求生命周期
 - **验证码闭环的三道防线**：TTL 5 分钟（redis setex 原子性）、发送冷却 60s 防刷（短信/邮件轰炸是真实资损）、错误 5 次销毁（10^6 空间在无上限时可暴力穷举）+ 一次性使用；错误响应统一"错误或已过期"文案不泄露内部状态；能对比讲"防枚举"：captcha 接口对未知邮箱直接 404 是学习项目的可调试性取舍，生产应统一话术让攻击者无法探测邮箱是否注册
+- **上传安全的最小闭环**：落盘文件名 100% 服务端生成（uuid + mimetype→扩展名白名单映射），原始文件名只当展示数据——一次性防掉路径穿越、双扩展（`a.php.jpg`）、特殊字符三类攻击；大小限制在 multer limits 层流式中断而非收完再拒；能引申：mimetype 是客户端声明可伪造，生产加 magic bytes 深检（file-type 库），公开目录里绝不能出现可被服务端解释执行的文件类型
+- **落库快照 vs 实时推导的对账模式**：活动状态落库是查询性能取舍（列表不用每行算时间窗），代价是时间流逝状态漂移（进行中→已结束不会自己变）；每分钟 cron 一条 CASE UPDATE 只改漂移行（WHERE status <> 期望值，无漂移零写入零日志）；验证时"未漂移行不被误改"与"漂移行被修正"同样重要——对账任务最怕误伤；能引申容器 UTC 与应用时区的时钟源一致性坑
 
 ## 契约链路阶段（待开始）
 

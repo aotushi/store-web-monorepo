@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
@@ -15,6 +17,8 @@ import { OrderModule } from './order/order.module';
 import { PermissionModule } from './permission/permission.module';
 import { ProductModule } from './product/product.module';
 import { RoleModule } from './role/role.module';
+import { UploadModule } from './upload/upload.module';
+import { UPLOAD_DIR } from './upload/upload.constants';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -41,6 +45,14 @@ import { UserModule } from './user/user.module';
         retryDelay: 3000,
       }),
     }),
+    // 定时任务基座（活动状态对账挂 ActivityModule 的 ActivityTasks）
+    ScheduleModule.forRoot(),
+    // 上传目录静态暴露：serve-static 走 middleware 层，不吃 api 前缀、不过全局守卫（商品图公开可见）
+    ServeStaticModule.forRoot({
+      rootPath: UPLOAD_DIR,
+      serveRoot: '/uploads',
+      serveStaticOptions: { index: false },
+    }),
     RedisModule,
     HealthModule,
     AuthModule,
@@ -50,6 +62,7 @@ import { UserModule } from './user/user.module';
     ProductModule,
     OrderModule,
     ActivityModule,
+    UploadModule,
   ],
   providers: [
     // 全局守卫，注册顺序即执行顺序：先认证（默认安全，@Public 豁免），后鉴权（@RequirePermission 声明式）

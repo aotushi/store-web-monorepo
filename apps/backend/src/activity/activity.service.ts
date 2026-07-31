@@ -86,4 +86,17 @@ export class ActivityService {
     if (!activity) throw new NotFoundException('活动不存在');
     await this.activityRepo.delete(id);
   }
+
+  // 定时对账（ActivityTasks 消费）：status 是落库快照，时间流逝会漂移（进行中→已结束不会自己变）。
+  // now 由应用传参而非 SQL NOW()——容器 mysqld 时区（UTC）与应用/驱动写入时区可能分裂，
+  // 传参保证与 create/edit 的 deriveStatus 同一时钟源；WHERE 限定漂移行，affectedRows 即修正数
+  async syncStatuses(now: Date): Promise<number> {
+    const result: { affectedRows?: number } = await this.activityRepo.query(
+      `UPDATE store_activity
+       SET status = CASE WHEN ? < startTime THEN 0 WHEN ? >= endTime THEN 2 ELSE 1 END
+       WHERE status <> CASE WHEN ? < startTime THEN 0 WHEN ? >= endTime THEN 2 ELSE 1 END`,
+      [now, now, now, now],
+    );
+    return result.affectedRows ?? 0;
+  }
 }

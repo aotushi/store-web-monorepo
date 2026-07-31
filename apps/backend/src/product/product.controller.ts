@@ -1,11 +1,34 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { memoryStorage } from 'multer';
 import { RequirePermission } from '../common/decorators/require-permission.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { EditProductDto } from './dto/edit-product.dto';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 import { Product } from './entities/product.entity';
+import { ProductImportService } from './product-import.service';
 import { ProductService } from './product.service';
 import { ProductListVo } from './vo/product-list.vo';
 
@@ -13,7 +36,10 @@ import { ProductListVo } from './vo/product-list.vo';
 @ApiBearerAuth()
 @Controller('product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly importService: ProductImportService,
+  ) {}
 
   @Post('create')
   @RequirePermission('ProductManage')
@@ -54,6 +80,22 @@ export class ProductController {
   @ApiOkResponse({ type: Product })
   updateStatus(@Body() dto: UpdateProductStatusDto) {
     return this.productService.updateStatus(dto);
+  }
+
+  // 原表把该接口挂 Home 权限点属种子瑕疵，归位 ProductManage；excel 只解析不留盘（memoryStorage）
+  @Post('import')
+  @RequirePermission('ProductManage')
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  @ApiOperation({ summary: 'excel 批量导入商品（表头：商品名称 | 商品描述 | 价格）' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+  })
+  importProducts(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('缺少上传文件（字段名 file）');
+    return this.importService.importFromExcel(file.buffer);
   }
 
   // 原项目用 GET /product/delete/:id，改为语义化 DELETE（同 user/role 模块决策）

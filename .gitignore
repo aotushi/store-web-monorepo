@@ -11,5 +11,8 @@ coverage/
 # 日志与系统文件（logs/ 含 winston 轮转的 .audit.json，仅 *.log 盖不住）
 logs/
 *.log
+
+# 上传文件落盘目录
+uploads/
 .DS_Store
 Thumbs.db

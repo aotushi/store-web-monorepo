@@ -1,4 +1,5 @@
 import ky, { HTTPError } from 'ky';
+import { getToken, setToken } from '@/stores/auth';
 
 // 后端统一响应壳（ResponseInterceptor / AllExceptionsFilter 两态对称）
 interface ResponseShell<T> {
@@ -21,8 +22,31 @@ export class ApiError extends Error {
   }
 }
 
-// token 注入 / 401 跳转 / 滑动续期响应头接收，后续都挂这里的 ky hooks（PLAN §5.4）
-const client = ky.create({ timeout: 10_000 });
+// 认证横切三件事全挂 ky hooks，业务代码零感知（PLAN §5.5）
+const client = ky.create({
+  timeout: 10_000,
+  hooks: {
+    beforeRequest: [
+      (request) => {
+        const token = getToken();
+        if (token) request.headers.set('authorization', `Bearer ${token}`);
+      },
+    ],
+    afterResponse: [
+      (request, _options, response) => {
+        // 滑动续期：后端 Guard 对临期 token 重签、新 token 放响应头，这里静默替换本地
+        const fresh = response.headers.get('token');
+        if (fresh) setToken(fresh);
+        // 401 唯一语义 = 登录态失效 → 清 token 回登录页（无 refresh 接口、无重放队列）；
+        // 登录接口自身的 401 是"密码错"业务失败，交表单展示，不在此拦
+        if (response.status === 401 && !new URL(request.url).pathname.endsWith('/auth/login')) {
+          setToken(null);
+          window.location.assign('/login');
+        }
+      },
+    ],
+  },
+});
 
 interface FetcherConfig {
   url: string;

@@ -13,14 +13,27 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-query-devtools": "^5.102.7",
+    "@tanstack/react-router": "^1.170.32",
+    "@tanstack/react-router-devtools": "^1.167.1",
+    "ahooks": "^3.9.7",
+    "antd": "^5.29.3",
+    "es-toolkit": "^1.51.0",
+    "jotai": "^2.20.3",
+    "jotai-tanstack-query": "^0.11.0",
     "ky": "^1.7.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-compiler-runtime": "^1.0.0",
+    "react-dom": "^18.3.1",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@tanstack/router-plugin": "^1.168.35",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^5.0.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "less": "^4.9.0",
     "orval": "^7.13.0",
     "typescript": "^5.7.3",
     "vite": "^7.1.0"

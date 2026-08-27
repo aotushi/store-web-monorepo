@@ -86,8 +86,14 @@
 - **TanStack Router 文件路由的生成物依赖链**：`routeTree.gen.ts` 由 vite 插件在 dev/build 时生成——新 clone 或新增路由后**先起一次 dev 才能 typecheck**（tsc 依赖生成文件在场）；`_authenticated` 无路径布局路由 = 守卫挂点（beforeLoad throw redirect），子路由全部继承；`autoCodeSplitting` 免手写 lazy 每路由自动分 chunk
 - **认证横切全挂 ky hooks 的收益**：beforeRequest 注 Bearer、afterResponse 收续期头 + 401 分流，三件事对业务代码和 orval 生成物完全透明——换库/加逻辑只动 mutator 一个文件；对照原项目在每个请求封装里手拼 header 的写法
 - **pnpm add 裸包名拿的是 latest 大版本**：antd 6 已发布，`pnpm add antd` 直接上 6——按规划锁大版本要显式 `antd@^5.x`；大版本换代（尤其组件库）牵动配套生态（pro-components），不能被包管理器"顺手升级"
+- **TanStack Router 的 context 是守卫层数据总线**：`createRootRouteWithContext<{queryClient}>` 声明形状 → createRouter 注入实例 → 布局路由 beforeLoad `ensureQueryData(currentUser)` 后 `return { me }`——me 同时进 Query 缓存（组件 useQuery 命中）和子路由 context（子 beforeLoad `context.me` 同步可用），一次预取两处消费，导航零重复请求；ensureQueryData 与 useQuery 用**同一份 queryOptions**（orval 生成的 getXxxQueryOptions）是缓存命中的关键——key 不一致就是两次请求
+- **ProLayout 接非配套路由器的三个挂点**：它默认假设 umi/react-router，接 TanStack Router 要 ① `location={{ pathname }}`（从 useRouterState 取，受控当前项高亮）② `menuItemRender` 把菜单项包进 router 的 `<Link>`（否则点击整页刷新）③ `menuDataRender` 返回过滤后的树（me 变更即重算）；菜单树与路由树是**两份声明**（菜单是导航子集，403/登录页不进菜单），不必强求单一来源
+- **菜单过滤规则也要"考古"出来而不是拍脑袋**：直觉规则"目录码控目录、叶子码控叶子"在种子数据下直接翻车——服务员挂了 HotProductList 却没挂 ProductManage 目录码，超管角色同样缺目录码；正确规则只能是"叶子看自身码、目录看是否有可见子项"。教训同后端旁路一例：**权限模型的语义藏在数据里**，实现前先把种子数据摸透
+- **Browser pane 的 console 按 origin 跨重启累计**：preview 停起后 read_console_messages 仍会吐出上一轮会话的旧错误——定位问题先交叉验证（network 面板本轮请求状态 + 后端日志 grep），本轮全 200/零 401 即可断定 console 里的 401 是历史残留；否则会追着不存在的 bug 跑
 
 ### 面试可讲
 
 - **滑动续期的前端半场**（与后端条目合成完整故事）：后端 Guard 临期重签放响应头 `token` → 前端 ky afterResponse 静默替换 localStorage + atom——全程业务代码无感知、无 refresh 接口、无 401 重放队列，401 唯一语义就是"重新登录"；实测手法值得讲：把重签阈值调到大于 token 寿命，任意请求即触发，断言 storage 里 token 值变化
 - **守卫为什么不在 beforeLoad 里验 token 有效性**：守卫只做同步存在性判断（零网络开销、无导航瀑布），有效性裁决权在后端——伪造/过期 token 放行后第一个接口 401，ky hook 清 token 硬跳登录，形成自愈闭环；对比"每次导航先 await currentUser"方案：多一次串行请求且仍然防不住"守卫过后 token 才过期"的窗口
+- **一份权限点数据的前后端双投影**：同一张 18 码权限表，后端消费点是 `@RequirePermission(code)` + PermissionGuard（安全边界），前端消费点是菜单过滤 filterMenu、页面守卫 requireCode、按钮 `<Permission>`/usePermission（三级粒度，全是体验层）——前端隐藏防不住直接调接口，真正的裁决永远在后端 403；两端必须同语义（含 userType=0 旁路），否则出现"菜单可见接口 403"或"接口能通入口不见"的割裂。对比原项目前端把权限码写死在路由 meta：码表一改两边漂移
+- **"登录成功即 403"死角分析**：登录后固定 navigate('/')，若首页也挂权限门槛，无 Home 码的角色（种子 rid3 实况）体验就是"密码对了却进不去系统"——落地页豁免 + 菜单照常过滤是常见解法；能引申：权限系统设计要过一遍"每个角色登录后第一屏是什么"的用例推演，纯按资源配权限容易漏掉导航流

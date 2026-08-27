@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：4 前端（PLAN §9.4）**进行中**——脚手架收口（文件路由 + React Compiler + §5.4 依赖齐）+ 登录/守卫/滑动续期闭环已上线（10 项浏览器矩阵）
-- **下一步**：权限四件套——ProLayout 壳 + 静态路由表 × 权限点过滤菜单 + beforeLoad 无权 403 + `<Permission>` 组件/usePermission；临时首页 `_authenticated/index.tsx` 届时替换
+- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅（ProLayout 壳 + 菜单过滤 + 页面守卫 + `<Permission>`，双账号浏览器矩阵 + vitest 6 用例）
+- **下一步**：业务页 CRUD 样板（PLAN §5.6）——ProTable × TanStack Query、列表筛选/分页状态进 URL search params；以用户管理为样板模块，`<Permission>` 正式用法届时替换首页演示卡
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -61,12 +61,16 @@
 - [x] orval 打通：tags-split 按 @ApiTags 拆 9 模块进 `src/apis/generated/`（进 git 不手改）；ky mutator 统一剥壳 + ApiError(code/message/detail) 归一化，字段级 400 数组存 detail 供表单回填
 - [x] 浏览器实测：health query 裸 data 直出（db/redis up）、login mutation 返回类型化 LoginVo、错密码 ApiError(401) 文案归一；typecheck 一次全绿
 
-### 4 前端 ⏳ 进行中（脚手架 ✅ → 登录 ✅ → 权限四件套 → 业务页 → 看板）
+### 4 前端 ⏳ 进行中（脚手架 ✅ → 登录 ✅ → 权限四件套 ✅ → 业务页 → 看板）
 
 - [x] 脚手架收口：TanStack Router 文件路由（router-plugin + autoCodeSplitting，routeTree.gen.ts 进 git）、React Compiler（babel 通道 target:'18' + react-compiler-runtime，无压缩产物 grep useMemoCache 实证）、§5.4 依赖补齐（jotai/rxjs/es-toolkit/ahooks/devtools 双件）+ antd 5（锁版）
 - [x] 认证闭环：tokenAtom（atomWithStorage getOnInit + 写入口归一 RESET）；ky hooks 三件套——beforeRequest 注 Bearer、afterResponse 收续期头静默替换、401 清 token 跳登录（登录接口自身 401 除外）；`_authenticated` 无路径布局 beforeLoad 守卫
 - [x] 登录页（antd Form 双层校验体验层 + CSS Modules 样板）+ 临时首页（currentUser 角色/权限点回显）
 - [x] 浏览器矩阵 10 项：未登录重定向、rules 拦空表单、错密码 toast 不跳转、登录跳首页、刷新持久化、已登录访问 /login 弹回、登出、篡改 token 401 自愈回登录、续期替换 localStorage 实证（阈值调大法）、登出 storage 零残留
+- [x] 权限内核 `src/permission/`：can()（userType=0 旁路与后端 PermissionGuard 同语义）+ requireCode()（无权 throw redirect /403）+ filterMenu（静态菜单树 × 权限点：叶子看自身码、目录看子项联动）+ `<Permission>`/usePermission 按钮级双形态
+- [x] ProLayout mix 壳进 `_authenticated` 布局路由：beforeLoad ensureQueryData 预取 currentUser 进 Query 缓存 + 路由 context（子路由守卫/组件共享零重复请求）；menuItemRender 挂 router Link、受控 location、登出下拉
+- [x] 7 张占位页（beforeLoad requireCode）+ /403 落点 + 首页改权限演示页（页面守卫豁免、菜单仍按 Home 码过滤）；vitest 落地纯逻辑必测（PLAN §5.7）：can/filterMenu 6 用例贴种子数据形状
+- [x] 浏览器矩阵双账号：超管全菜单 5 顶级项 + 旁路三按钮全见 + /system/user 200；服务员菜单仅 首页+商品管理>热销商品、delete:role fallback 呈现、/system/user 与 /order → 403、/product/hot 放行、403 回首页正常
 
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
@@ -83,6 +87,7 @@
 | 2026-07-31 | 1h    | schedule/上传：图片上传（随机落盘名+白名单）+ serve-static 公开、excel 导入（行级校验+原子入库）、活动状态每分钟对账（时钟源统一坑）                | 后端阶段收官（22 项矩阵）   |
 | 2026-07-31 | 1h    | 契约链路：swagger 同源抽取 + openapi 导出脚本、React18+Vite 最小脚手架、orval 9 模块生成、ky 剥壳 mutator，浏览器三链路实测                         | 契约链路打通（§9.3 收官）   |
 | 2026-08-27 | 1h    | 前端开工：文件路由 + React Compiler + §5.4 依赖收口；登录页、beforeLoad 守卫、ky 认证三 hooks（注 token/收续期头/401 分流）                         | 登录闭环上线（10 项矩阵）   |
+| 2026-08-27 | 1h    | 权限四件套：can/requireCode/filterMenu/`<Permission>` + ProLayout 壳（context 预取 currentUser）+ 7 占位页 + vitest 6 用例；双账号浏览器矩阵        | 权限四件套上线              |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -118,3 +123,8 @@
 | 2026-08-27 | React Compiler 走 @vitejs/plugin-react 的 babel 插件通道                      | 脚手架是 vite7+plugin-react（非 Vite+ rolldown），§7#10 的 oxc 实验通道不适用，babel 是官方支持路径  |
 | 2026-08-27 | 401 语义分流在 ky afterResponse 统一裁决                                      | 登录接口 401=密码错交表单；其余 401=登录态失效清 token 硬跳 /login；无 refresh 接口无重放队列        |
 | 2026-08-27 | 路由守卫只判 token 存在性，不发请求验有效性                                   | beforeLoad 同步零开销；伪造/过期 token 由后端 401 + ky hook 兜底自愈，避免每次导航都打 currentUser   |
+| 2026-08-27 | 菜单目录显隐由子项联动，目录自身码不作门槛                                    | 种子实锤：服务员挂 HotProductList 却无 ProductManage 目录码，超管角色同缺目录码；子项联动唯一自洽    |
+| 2026-08-27 | 前端 can() 复制后端 userType=0 超管旁路                                       | 前后端判定同语义，否则超管（角色仅 8 码）菜单/按钮大面积消失而接口全通，两边表现割裂                 |
+| 2026-08-27 | 首页页面守卫豁免，但菜单里"首页"仍按 Home 码过滤                              | 登录后固定落地 /，若设门槛则无 Home 码角色（种子 rid3 实况）登录成功即 403 死角                      |
+| 2026-08-27 | currentUser 在布局路由 beforeLoad 用 ensureQueryData 预取                     | 写进 Query 缓存 + 路由 context 双出口，子路由守卫与组件共享同一份，导航零重复请求                    |
+| 2026-08-27 | vitest 随权限切片落地（零独立配置）                                           | PLAN §5.7 纯逻辑必测清单第一项就是权限过滤；复用 vite 配置即跑，6 用例贴种子数据形状                 |

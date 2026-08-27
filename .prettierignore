@@ -5,3 +5,6 @@ build/
 coverage/
 pnpm-lock.yaml
 sql/
+# 生成物不 lint 不手改（契约链路产物，PLAN §5.3）
+apps/backend/openapi.json
+apps/frontend/src/apis/generated/

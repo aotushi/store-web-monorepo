@@ -1,0 +1,2326 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "存活探针：进程 + MySQL + Redis 连通性",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginVo"
+                }
+              }
+            }
+          }
+        },
+        "summary": "登录",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterVo"
+                }
+              }
+            }
+          }
+        },
+        "summary": "注册",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/captcha": {
+      "post": {
+        "operationId": "AuthController_sendCaptcha",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCaptchaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptchaVo"
+                }
+              }
+            }
+          }
+        },
+        "summary": "发送重置密码邮箱验证码",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/resetPassword": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "通过邮箱验证码重置密码",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/user/currentUser": {
+      "get": {
+        "operationId": "UserController_currentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "当前登录用户（含角色与权限点）",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/user/list": {
+      "get": {
+        "operationId": "UserController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "每页条数",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "username",
+            "required": false,
+            "in": "query",
+            "description": "用户名模糊搜索",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "用户列表（分页 + 用户名模糊搜索）",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/user/edit": {
+      "patch": {
+        "operationId": "UserController_edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "编辑用户（资料 + 角色分配）",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/user/freezed": {
+      "patch": {
+        "operationId": "UserController_freezed",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreezeUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "冻结/解冻用户",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/user/{id}": {
+      "delete": {
+        "operationId": "UserController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "删除用户",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/role/list": {
+      "get": {
+        "operationId": "RoleController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Role"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "角色列表（含权限点）",
+        "tags": [
+          "role"
+        ]
+      }
+    },
+    "/api/role/create": {
+      "post": {
+        "operationId": "RoleController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "创建角色（含权限点分配）",
+        "tags": [
+          "role"
+        ]
+      }
+    },
+    "/api/role/edit": {
+      "patch": {
+        "operationId": "RoleController_edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "编辑角色（含权限点整体替换）",
+        "tags": [
+          "role"
+        ]
+      }
+    },
+    "/api/role/{id}": {
+      "delete": {
+        "operationId": "RoleController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "删除角色（系统内置角色不可删）",
+        "tags": [
+          "role"
+        ]
+      }
+    },
+    "/api/permission/list": {
+      "get": {
+        "operationId": "PermissionController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Permission"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "权限点列表（平铺）",
+        "tags": [
+          "permission"
+        ]
+      }
+    },
+    "/api/product/create": {
+      "post": {
+        "operationId": "ProductController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "创建商品",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/list": {
+      "get": {
+        "operationId": "ProductController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "每页条数",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "商品名称模糊搜索",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "商品状态筛选",
+            "schema": {
+              "type": "number",
+              "enum": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "商品列表（分页 + 名称模糊 + 状态筛选）",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/hot-list": {
+      "get": {
+        "operationId": "ProductController_hotList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "热销商品",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/edit": {
+      "patch": {
+        "operationId": "ProductController_edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "编辑商品（上下架走 updateStatus）",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/updateStatus": {
+      "patch": {
+        "operationId": "ProductController_updateStatus",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "商品上下架",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/import": {
+      "post": {
+        "operationId": "ProductController_importProducts",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "excel 批量导入商品（表头：商品名称 | 商品描述 | 价格）",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/product/{id}": {
+      "delete": {
+        "operationId": "ProductController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "删除商品（被订单/活动引用时拒删）",
+        "tags": [
+          "product"
+        ]
+      }
+    },
+    "/api/order/create": {
+      "post": {
+        "operationId": "OrderController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "下单（商品须已上架；金额按商品价快照计算）",
+        "tags": [
+          "order"
+        ]
+      }
+    },
+    "/api/order/list": {
+      "get": {
+        "operationId": "OrderController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "每页条数",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "商品名称模糊搜索",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "订单状态筛选 0 未付款 1 已付款 2 已取消",
+            "schema": {
+              "type": "number",
+              "enum": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderListVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "订单列表（分页 + 商品名模糊 + 状态筛选）",
+        "tags": [
+          "order"
+        ]
+      }
+    },
+    "/api/order/detail/{id}": {
+      "get": {
+        "operationId": "OrderController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "订单详情（含关联商品）",
+        "tags": [
+          "order"
+        ]
+      }
+    },
+    "/api/order/updateOrder": {
+      "patch": {
+        "operationId": "OrderController_updateOrder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "订单状态流转（0→1 付款，0/1→2 取消，已取消为终态）",
+        "tags": [
+          "order"
+        ]
+      }
+    },
+    "/api/order/{id}": {
+      "delete": {
+        "operationId": "OrderController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "删除订单（事务清关联表）",
+        "tags": [
+          "order"
+        ]
+      }
+    },
+    "/api/activity/create": {
+      "post": {
+        "operationId": "ActivityController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "创建活动（初始状态按时间窗推导）",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/activity/list": {
+      "get": {
+        "operationId": "ActivityController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "每页条数",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "活动名称模糊搜索",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "活动状态筛选 0 未开始 1 进行中 2 已结束",
+            "schema": {
+              "type": "number",
+              "enum": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "活动列表（分页 + 名称模糊 + 状态筛选）",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/activity/edit": {
+      "patch": {
+        "operationId": "ActivityController_edit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "编辑活动（时间窗变更时重推状态）",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/activity/{id}": {
+      "delete": {
+        "operationId": "ActivityController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "删除活动",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/upload/image": {
+      "post": {
+        "operationId": "UploadController_uploadImage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "上传商品图片（≤2MB）",
+        "tags": [
+          "upload"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "store-web API",
+    "description": "数字门店系统后端接口",
+    "version": "0.1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "test"
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "example": "a123456"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "LoginVo": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT，后续请求放 Authorization: Bearer <token>"
+          },
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          }
+        },
+        "required": [
+          "token",
+          "id",
+          "username"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "newuser"
+          },
+          "password": {
+            "type": "string",
+            "description": "密码（6-72 位）",
+            "example": "a123456"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "RegisterVo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ]
+      },
+      "SendCaptchaDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "账号绑定邮箱",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "CaptchaVo": {
+        "type": "object",
+        "properties": {
+          "ttl": {
+            "type": "number",
+            "description": "验证码有效期（秒）",
+            "example": 300
+          }
+        },
+        "required": [
+          "ttl"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "账号绑定邮箱",
+            "example": "user@example.com"
+          },
+          "captcha": {
+            "type": "string",
+            "description": "邮箱验证码（6 位数字）",
+            "example": "123456"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "新密码（6-72 位）",
+            "example": "a654321"
+          }
+        },
+        "required": [
+          "email",
+          "captcha",
+          "newPassword"
+        ]
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "权限点 id"
+          },
+          "title": {
+            "type": "string",
+            "description": "权限名称（菜单名称）"
+          },
+          "code": {
+            "type": "string",
+            "description": "权限码（唯一，接口鉴权与前端权限点同源）"
+          },
+          "type": {
+            "type": "number",
+            "description": "权限类型 0 菜单 1 页面 2 组件 3 按钮"
+          },
+          "parentId": {
+            "type": "number",
+            "description": "父级 id，0 为根"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "code",
+          "type",
+          "parentId"
+        ]
+      },
+      "CurrentUserVo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像"
+          },
+          "userType": {
+            "type": "number",
+            "description": "用户类型 0 管理员 1 普通用户"
+          },
+          "roles": {
+            "description": "角色名列表",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "description": "权限点去重平铺（前端组装菜单树 / 按钮权限）",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "avatar",
+          "userType",
+          "roles",
+          "permissions"
+        ]
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "角色 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "角色名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "角色描述"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          },
+          "isSystem": {
+            "type": "number",
+            "description": "是否系统内置 0 否 1 是（内置角色禁删）"
+          },
+          "permissions": {
+            "description": "角色拥有的权限点",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "desc",
+          "createTime",
+          "updateTime",
+          "isSystem"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "userType": {
+            "type": "number",
+            "description": "用户类型 0 管理员 1 普通用户"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          },
+          "freezed": {
+            "type": "number",
+            "description": "是否冻结 0 否 1 是（冻结后禁止登录）"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像"
+          },
+          "desc": {
+            "type": "string",
+            "description": "备注"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "roles": {
+            "description": "用户角色",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "userType",
+          "email",
+          "freezed",
+          "avatar",
+          "desc",
+          "createTime"
+        ]
+      },
+      "UserListVo": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "description": "当前页数据",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总条数"
+          }
+        },
+        "required": [
+          "list",
+          "total"
+        ]
+      },
+      "EditUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像"
+          },
+          "desc": {
+            "type": "string",
+            "description": "备注"
+          },
+          "roleIds": {
+            "description": "角色 id 列表（传入即整体替换）",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "FreezeUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户 id"
+          },
+          "freezed": {
+            "type": "number",
+            "description": "0 解冻 1 冻结",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "freezed"
+        ]
+      },
+      "CreateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "角色名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "角色描述"
+          },
+          "permissionIds": {
+            "description": "权限点 id 列表",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "desc"
+        ]
+      },
+      "EditRoleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "角色 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "角色名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "角色描述"
+          },
+          "permissionIds": {
+            "description": "权限点 id 列表（传入即整体替换）",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "商品名称",
+            "example": "烧鹅"
+          },
+          "desc": {
+            "type": "string",
+            "description": "商品描述",
+            "example": "今日现烧"
+          },
+          "price": {
+            "type": "number",
+            "description": "商品价格",
+            "example": 38.5
+          },
+          "images": {
+            "type": "string",
+            "description": "商品图片"
+          },
+          "status": {
+            "type": "number",
+            "description": "商品状态 0 未上架 1 已上架 2 已下架",
+            "enum": [
+              0,
+              1,
+              2
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "desc",
+          "price"
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名称"
+          },
+          "images": {
+            "type": "object",
+            "description": "商品图片",
+            "nullable": true
+          },
+          "desc": {
+            "type": "string",
+            "description": "商品描述"
+          },
+          "status": {
+            "type": "number",
+            "description": "商品状态 0 未上架 1 已上架 2 已下架"
+          },
+          "price": {
+            "type": "number",
+            "description": "商品价格"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "images",
+          "desc",
+          "status",
+          "price",
+          "createTime",
+          "updateTime"
+        ]
+      },
+      "ProductListVo": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "description": "当前页数据",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总条数"
+          }
+        },
+        "required": [
+          "list",
+          "total"
+        ]
+      },
+      "EditProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "商品描述"
+          },
+          "price": {
+            "type": "number",
+            "description": "商品价格"
+          },
+          "images": {
+            "type": "string",
+            "description": "商品图片"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "UpdateProductStatusDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "status": {
+            "type": "number",
+            "description": "商品状态 0 未上架 1 已上架 2 已下架",
+            "enum": [
+              0,
+              1,
+              2
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "count": {
+            "type": "number",
+            "description": "商品数量",
+            "example": 2
+          },
+          "discount": {
+            "type": "number",
+            "description": "订单折扣（0.01~1，默认不打折）",
+            "example": 0.88
+          },
+          "desc": {
+            "type": "string",
+            "description": "订单备注"
+          }
+        },
+        "required": [
+          "productId",
+          "count"
+        ]
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "订单 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名称（下单时快照）"
+          },
+          "count": {
+            "type": "number",
+            "description": "商品数量"
+          },
+          "discount": {
+            "type": "number",
+            "description": "订单折扣（0.01~1）"
+          },
+          "price": {
+            "type": "number",
+            "description": "订单价格（单价 × 数量）"
+          },
+          "discountPrice": {
+            "type": "number",
+            "description": "订单折扣价"
+          },
+          "status": {
+            "type": "number",
+            "description": "订单状态 0 未付款 1 已付款 2 已取消"
+          },
+          "operator": {
+            "type": "string",
+            "description": "操作员（下单人用户名）"
+          },
+          "desc": {
+            "type": "object",
+            "description": "订单备注",
+            "nullable": true
+          },
+          "productId": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "count",
+          "discount",
+          "price",
+          "discountPrice",
+          "status",
+          "operator",
+          "desc",
+          "productId",
+          "createTime"
+        ]
+      },
+      "OrderListVo": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "description": "当前页数据",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总条数"
+          }
+        },
+        "required": [
+          "list",
+          "total"
+        ]
+      },
+      "OrderDetailVo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "订单 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名称（下单时快照）"
+          },
+          "count": {
+            "type": "number",
+            "description": "商品数量"
+          },
+          "discount": {
+            "type": "number",
+            "description": "订单折扣（0.01~1）"
+          },
+          "price": {
+            "type": "number",
+            "description": "订单价格（单价 × 数量）"
+          },
+          "discountPrice": {
+            "type": "number",
+            "description": "订单折扣价"
+          },
+          "status": {
+            "type": "number",
+            "description": "订单状态 0 未付款 1 已付款 2 已取消"
+          },
+          "operator": {
+            "type": "string",
+            "description": "操作员（下单人用户名）"
+          },
+          "desc": {
+            "type": "object",
+            "description": "订单备注",
+            "nullable": true
+          },
+          "productId": {
+            "type": "number",
+            "description": "商品 id"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "product": {
+            "description": "关联商品（已删除时为 null）",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Product"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "count",
+          "discount",
+          "price",
+          "discountPrice",
+          "status",
+          "operator",
+          "desc",
+          "productId",
+          "createTime",
+          "product"
+        ]
+      },
+      "UpdateOrderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "订单 id"
+          },
+          "status": {
+            "type": "number",
+            "description": "目标状态 1 已付款 2 已取消",
+            "enum": [
+              1,
+              2
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "CreateActivityDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "活动名称",
+            "example": "周末烧烤节"
+          },
+          "type": {
+            "type": "number",
+            "description": "活动类型 0 普通活动 1 拼团活动",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "desc": {
+            "type": "string",
+            "description": "活动描述"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "活动开始时间（ISO 8601）",
+            "example": "2026-08-01T10:00:00+08:00"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "活动结束时间（ISO 8601）",
+            "example": "2026-08-03T22:00:00+08:00"
+          },
+          "productId": {
+            "type": "number",
+            "description": "参与活动的商品 id"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "startTime",
+          "endTime",
+          "productId"
+        ]
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "活动 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "活动名称"
+          },
+          "status": {
+            "type": "number",
+            "description": "活动状态 0 未开始 1 进行中 2 已结束"
+          },
+          "type": {
+            "type": "number",
+            "description": "活动类型 0 普通活动 1 拼团活动"
+          },
+          "desc": {
+            "type": "string",
+            "description": "活动描述"
+          },
+          "startTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "活动开始时间"
+          },
+          "endTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "活动结束时间"
+          },
+          "productId": {
+            "type": "number",
+            "description": "参与活动的商品 id"
+          },
+          "createTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "type",
+          "desc",
+          "startTime",
+          "endTime",
+          "productId",
+          "createTime",
+          "updateTime"
+        ]
+      },
+      "ActivityListVo": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "description": "当前页数据",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总条数"
+          }
+        },
+        "required": [
+          "list",
+          "total"
+        ]
+      },
+      "EditActivityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "活动 id"
+          },
+          "name": {
+            "type": "string",
+            "description": "活动名称"
+          },
+          "type": {
+            "type": "number",
+            "description": "活动类型 0 普通活动 1 拼团活动",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "desc": {
+            "type": "string",
+            "description": "活动描述"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "活动开始时间（ISO 8601）"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "活动结束时间（ISO 8601）"
+          },
+          "productId": {
+            "type": "number",
+            "description": "参与活动的商品 id"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    }
+  }
+}

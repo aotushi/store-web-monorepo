@@ -1,45 +1,45 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Button, Descriptions, Spin, Tag } from 'antd';
-import { useSetAtom } from 'jotai';
-import { useUserControllerCurrentUser } from '@/apis/generated/user/user';
-import { tokenAtom } from '@/stores/auth';
+import { PageContainer } from '@ant-design/pro-components';
+import { createFileRoute } from '@tanstack/react-router';
+import { Button, Card, Descriptions, Space, Tag } from 'antd';
+import { Permission, usePermission } from '@/permission/Permission';
 
+// 首页看板进看板切片；当前作为按钮级权限（COMPON）双形态的演示与实测挂点。
+// 页面守卫豁免：菜单里"首页"仍按 Home 码过滤，但登录后落地页不设门槛，避免"登录成功即 403"死角
 export const Route = createFileRoute('/_authenticated/')({ component: HomePage });
 
-// 临时首页：证明"守卫放行 → token 注入 → currentUser 取回角色/权限点"闭环。
-// ProLayout 壳 + 菜单权限过滤进权限四件套切片后替换本文件
 function HomePage() {
-  const navigate = useNavigate();
-  const setToken = useSetAtom(tokenAtom);
-  const me = useUserControllerCurrentUser();
-
-  const logout = () => {
-    setToken(null);
-    void navigate({ to: '/login' });
-  };
-
-  if (me.isPending) return <Spin style={{ margin: 48 }} />;
-  if (me.isError) return <p style={{ margin: 48 }}>加载用户信息失败</p>;
+  const { me } = Route.useRouteContext();
+  const { has } = usePermission();
 
   return (
-    <div style={{ padding: 48 }}>
-      <Descriptions
-        title="当前用户（契约链路 + 认证闭环验证）"
-        column={1}
-        bordered
-        items={[
-          { key: 'u', label: '用户名', children: `${me.data.username}#${me.data.id}` },
-          {
-            key: 'r',
-            label: '角色',
-            children: me.data.roles.map((r) => <Tag key={r}>{r}</Tag>),
-          },
-          { key: 'p', label: '权限点数', children: me.data.permissions.length },
-        ]}
-      />
-      <Button style={{ marginTop: 24 }} onClick={logout} data-testid="logout">
-        退出登录
-      </Button>
-    </div>
+    <PageContainer title={`欢迎，${me.username}`}>
+      <Card title="当前用户">
+        <Descriptions
+          column={1}
+          items={[
+            { key: 'r', label: '角色', children: me.roles.map((r) => <Tag key={r}>{r}</Tag>) },
+            { key: 'p', label: '权限点数', children: me.permissions.length },
+            { key: 'b', label: 'usePermission(delete:user)', children: String(has('delete:user')) },
+          ]}
+        />
+      </Card>
+      <Card title="按钮权限演示（Permission 组件，正式用法进业务页）" style={{ marginTop: 16 }}>
+        <Space>
+          <Permission code="delete:user">
+            <Button danger data-testid="btn-delete-user">
+              删除用户（delete:user）
+            </Button>
+          </Permission>
+          <Permission code="delete:activity">
+            <Button data-testid="btn-delete-activity">删除活动（delete:activity）</Button>
+          </Permission>
+          <Permission code="delete:role" fallback={<Tag data-testid="no-delete-role">无 delete:role 权限</Tag>}>
+            <Button danger data-testid="btn-delete-role">
+              删除角色（delete:role）
+            </Button>
+          </Permission>
+        </Space>
+      </Card>
+    </PageContainer>
   );
 }

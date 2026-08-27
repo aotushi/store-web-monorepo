@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, context: { queryClient } });
 
 // 类型注册：让全应用的 navigate/Link 拿到路由表级别的类型推导
 declare module '@tanstack/react-router' {

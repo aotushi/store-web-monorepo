@@ -12,6 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as Authenticated403RouteImport } from './routes/_authenticated/403'
+import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
+import { Route as AuthenticatedOrderRouteImport } from './routes/_authenticated/order'
+import { Route as AuthenticatedProductIndexRouteImport } from './routes/_authenticated/product/index'
+import { Route as AuthenticatedProductHotRouteImport } from './routes/_authenticated/product/hot'
+import { Route as AuthenticatedSystemPermissionRouteImport } from './routes/_authenticated/system/permission'
+import { Route as AuthenticatedSystemRoleRouteImport } from './routes/_authenticated/system/role'
+import { Route as AuthenticatedSystemUserRouteImport } from './routes/_authenticated/system/user'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -27,27 +35,125 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const Authenticated403Route = Authenticated403RouteImport.update({
+  id: '/403',
+  path: '/403',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOrderRoute = AuthenticatedOrderRouteImport.update({
+  id: '/order',
+  path: '/order',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProductIndexRoute =
+  AuthenticatedProductIndexRouteImport.update({
+    id: '/product/',
+    path: '/product/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProductHotRoute = AuthenticatedProductHotRouteImport.update({
+  id: '/product/hot',
+  path: '/product/hot',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSystemPermissionRoute =
+  AuthenticatedSystemPermissionRouteImport.update({
+    id: '/system/permission',
+    path: '/system/permission',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSystemRoleRoute = AuthenticatedSystemRoleRouteImport.update({
+  id: '/system/role',
+  path: '/system/role',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSystemUserRoute = AuthenticatedSystemUserRouteImport.update({
+  id: '/system/user',
+  path: '/system/user',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/403': typeof Authenticated403Route
+  '/activity': typeof AuthenticatedActivityRoute
+  '/order': typeof AuthenticatedOrderRoute
+  '/product/hot': typeof AuthenticatedProductHotRoute
+  '/system/permission': typeof AuthenticatedSystemPermissionRoute
+  '/system/role': typeof AuthenticatedSystemRoleRoute
+  '/system/user': typeof AuthenticatedSystemUserRoute
+  '/product/': typeof AuthenticatedProductIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/403': typeof Authenticated403Route
+  '/activity': typeof AuthenticatedActivityRoute
+  '/order': typeof AuthenticatedOrderRoute
   '/': typeof AuthenticatedIndexRoute
+  '/product/hot': typeof AuthenticatedProductHotRoute
+  '/system/permission': typeof AuthenticatedSystemPermissionRoute
+  '/system/role': typeof AuthenticatedSystemRoleRoute
+  '/system/user': typeof AuthenticatedSystemUserRoute
+  '/product': typeof AuthenticatedProductIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/403': typeof Authenticated403Route
+  '/_authenticated/activity': typeof AuthenticatedActivityRoute
+  '/_authenticated/order': typeof AuthenticatedOrderRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/product/hot': typeof AuthenticatedProductHotRoute
+  '/_authenticated/system/permission': typeof AuthenticatedSystemPermissionRoute
+  '/_authenticated/system/role': typeof AuthenticatedSystemRoleRoute
+  '/_authenticated/system/user': typeof AuthenticatedSystemUserRoute
+  '/_authenticated/product/': typeof AuthenticatedProductIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/403'
+    | '/activity'
+    | '/order'
+    | '/product/hot'
+    | '/system/permission'
+    | '/system/role'
+    | '/system/user'
+    | '/product/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/'
-  id: '__root__' | '/_authenticated' | '/login' | '/_authenticated/'
+  to:
+    | '/login'
+    | '/403'
+    | '/activity'
+    | '/order'
+    | '/'
+    | '/product/hot'
+    | '/system/permission'
+    | '/system/role'
+    | '/system/user'
+    | '/product'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/403'
+    | '/_authenticated/activity'
+    | '/_authenticated/order'
+    | '/_authenticated/'
+    | '/_authenticated/product/hot'
+    | '/_authenticated/system/permission'
+    | '/_authenticated/system/role'
+    | '/_authenticated/system/user'
+    | '/_authenticated/product/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,15 +184,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/403': {
+      id: '/_authenticated/403'
+      path: '/403'
+      fullPath: '/403'
+      preLoaderRoute: typeof Authenticated403RouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/order': {
+      id: '/_authenticated/order'
+      path: '/order'
+      fullPath: '/order'
+      preLoaderRoute: typeof AuthenticatedOrderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/product/': {
+      id: '/_authenticated/product/'
+      path: '/product'
+      fullPath: '/product/'
+      preLoaderRoute: typeof AuthenticatedProductIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/product/hot': {
+      id: '/_authenticated/product/hot'
+      path: '/product/hot'
+      fullPath: '/product/hot'
+      preLoaderRoute: typeof AuthenticatedProductHotRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/system/permission': {
+      id: '/_authenticated/system/permission'
+      path: '/system/permission'
+      fullPath: '/system/permission'
+      preLoaderRoute: typeof AuthenticatedSystemPermissionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/system/role': {
+      id: '/_authenticated/system/role'
+      path: '/system/role'
+      fullPath: '/system/role'
+      preLoaderRoute: typeof AuthenticatedSystemRoleRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/system/user': {
+      id: '/_authenticated/system/user'
+      path: '/system/user'
+      fullPath: '/system/user'
+      preLoaderRoute: typeof AuthenticatedSystemUserRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  Authenticated403Route: typeof Authenticated403Route
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
+  AuthenticatedOrderRoute: typeof AuthenticatedOrderRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedProductHotRoute: typeof AuthenticatedProductHotRoute
+  AuthenticatedSystemPermissionRoute: typeof AuthenticatedSystemPermissionRoute
+  AuthenticatedSystemRoleRoute: typeof AuthenticatedSystemRoleRoute
+  AuthenticatedSystemUserRoute: typeof AuthenticatedSystemUserRoute
+  AuthenticatedProductIndexRoute: typeof AuthenticatedProductIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  Authenticated403Route: Authenticated403Route,
+  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
+  AuthenticatedOrderRoute: AuthenticatedOrderRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedProductHotRoute: AuthenticatedProductHotRoute,
+  AuthenticatedSystemPermissionRoute: AuthenticatedSystemPermissionRoute,
+  AuthenticatedSystemRoleRoute: AuthenticatedSystemRoleRoute,
+  AuthenticatedSystemUserRoute: AuthenticatedSystemUserRoute,
+  AuthenticatedProductIndexRoute: AuthenticatedProductIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

@@ -1,4 +1,5 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import type { QueryClient } from '@tanstack/react-query';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
 
 // Devtools 只进 dev 构建：PROD 下换空组件 + lazy 保证包体零残留
@@ -15,7 +16,12 @@ const QueryDevtools = import.meta.env.PROD
       import('@tanstack/react-query-devtools').then((m) => ({ default: m.ReactQueryDevtools })),
     );
 
-export const Route = createRootRoute({
+// router context：queryClient 下发给各路由 beforeLoad（守卫里 ensureQueryData 取 currentUser）
+interface RouterContext {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />

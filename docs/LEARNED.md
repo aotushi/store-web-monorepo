@@ -77,4 +77,17 @@
 - **后端代码作为类型单一事实来源**：swagger 装饰器 → openapi.json → orval 生成 TS 类型 + TanStack Query hooks，前端"手写 API 层"整个消失，后端改 DTO 前端 typecheck 直接红——对比手写共享 types 包方案（要人肉同步、漂移无感知）和 tRPC 方案（类型直通但绑死 TS 全栈、丢标准 OpenAPI 生态）；能讲清 openapi.json 与生成物**进 git** 的理由：契约变更在 code review 的 diff 里可见，而不是藏在 CI 的生成步骤里
 - **错误归一化的分层**：HTTP 层杂音（超时/断网/非 2xx）与业务失败壳在 mutator 收敛成单一 `ApiError(code, message, detail)`，Query 的 onError 只认一种形状；字段级 400 的 message 数组不丢——文案压成"请求参数有误"、原数组存 detail 供表单逐字段回填，对应双层校验里"后端兜底、前端体验"的分工
 
-## 前端阶段（待开始）
+## 前端阶段
+
+### 知识点
+
+- **atomWithStorage 两个默认行为都会咬人**：① `getOnInit` 默认 false——初始渲染先用 initialValue、挂载后才读 storage；路由 beforeLoad 在挂载前同步跑，不开它已登录用户刷新会被误判未登录踢回 /login；② `set(atom, null)` 会往 localStorage 写字符串 `"null"` 而非移除条目——要移除必须写入 `RESET` 符号；本项目用派生可写 atom 把 null→RESET 归一在写入口
+- **React Compiler 在 React 18 的完整装配**：`babel-plugin-react-compiler` 配 `target: '18'` + dependencies 里装 `react-compiler-runtime`（18 没有内建 `react/compiler-runtime`，runtime 包 polyfill useMemoCache）；走 `@vitejs/plugin-react` 的 `babel.plugins` 通道；**验证生效**用无压缩构建 grep `useMemoCache`（minify 后标识符会没）
+- **TanStack Router 文件路由的生成物依赖链**：`routeTree.gen.ts` 由 vite 插件在 dev/build 时生成——新 clone 或新增路由后**先起一次 dev 才能 typecheck**（tsc 依赖生成文件在场）；`_authenticated` 无路径布局路由 = 守卫挂点（beforeLoad throw redirect），子路由全部继承；`autoCodeSplitting` 免手写 lazy 每路由自动分 chunk
+- **认证横切全挂 ky hooks 的收益**：beforeRequest 注 Bearer、afterResponse 收续期头 + 401 分流，三件事对业务代码和 orval 生成物完全透明——换库/加逻辑只动 mutator 一个文件；对照原项目在每个请求封装里手拼 header 的写法
+- **pnpm add 裸包名拿的是 latest 大版本**：antd 6 已发布，`pnpm add antd` 直接上 6——按规划锁大版本要显式 `antd@^5.x`；大版本换代（尤其组件库）牵动配套生态（pro-components），不能被包管理器"顺手升级"
+
+### 面试可讲
+
+- **滑动续期的前端半场**（与后端条目合成完整故事）：后端 Guard 临期重签放响应头 `token` → 前端 ky afterResponse 静默替换 localStorage + atom——全程业务代码无感知、无 refresh 接口、无 401 重放队列，401 唯一语义就是"重新登录"；实测手法值得讲：把重签阈值调到大于 token 寿命，任意请求即触发，断言 storage 里 token 值变化
+- **守卫为什么不在 beforeLoad 里验 token 有效性**：守卫只做同步存在性判断（零网络开销、无导航瀑布），有效性裁决权在后端——伪造/过期 token 放行后第一个接口 401，ky hook 清 token 硬跳登录，形成自愈闭环；对比"每次导航先 await currentUser"方案：多一次串行请求且仍然防不住"守卫过后 token 才过期"的窗口

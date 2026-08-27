@@ -3,12 +3,12 @@
 > 单一入口掌握**接续点 / 进度 / 时间投入 / 临场决策**；每个工作 session 结束时更新本文件。
 > 姊妹篇：[ISSUES.md](./ISSUES.md)（问题与坑）｜ [LEARNED.md](./LEARNED.md)（学习收获与面试素材）｜ [PLAN.md](./PLAN.md)（开工前决策，只在大方向变化时修订）
 
-**最后更新**：2026-07-31
+**最后更新**：2026-08-27
 
 ## NOW（会话接续点）
 
-- **当前阶段**：3 契约链路（PLAN §9.3）**已打通**——openapi.json 导出（32 路径/30 schema）→ orval 生成 9 模块 hooks → ky mutator 剥壳，浏览器实测 health query / login mutation / ApiError(401) 三链路
-- **下一步**：前端（§9.4）——脚手架续建（TanStack Router/jotai/antd 按 PLAN §5.4 补齐）→ 登录页 → 权限四件套 → 业务页 → 看板
+- **当前阶段**：4 前端（PLAN §9.4）**进行中**——脚手架收口（文件路由 + React Compiler + §5.4 依赖齐）+ 登录/守卫/滑动续期闭环已上线（10 项浏览器矩阵）
+- **下一步**：权限四件套——ProLayout 壳 + 静态路由表 × 权限点过滤菜单 + beforeLoad 无权 403 + `<Permission>` 组件/usePermission；临时首页 `_authenticated/index.tsx` 届时替换
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -61,7 +61,12 @@
 - [x] orval 打通：tags-split 按 @ApiTags 拆 9 模块进 `src/apis/generated/`（进 git 不手改）；ky mutator 统一剥壳 + ApiError(code/message/detail) 归一化，字段级 400 数组存 detail 供表单回填
 - [x] 浏览器实测：health query 裸 data 直出（db/redis up）、login mutation 返回类型化 LoginVo、错密码 ApiError(401) 文案归一；typecheck 一次全绿
 
-### 4 前端 ⏳ 未开始（脚手架 → 登录 → 权限四件套 → 业务页 → 看板）
+### 4 前端 ⏳ 进行中（脚手架 ✅ → 登录 ✅ → 权限四件套 → 业务页 → 看板）
+
+- [x] 脚手架收口：TanStack Router 文件路由（router-plugin + autoCodeSplitting，routeTree.gen.ts 进 git）、React Compiler（babel 通道 target:'18' + react-compiler-runtime，无压缩产物 grep useMemoCache 实证）、§5.4 依赖补齐（jotai/rxjs/es-toolkit/ahooks/devtools 双件）+ antd 5（锁版）
+- [x] 认证闭环：tokenAtom（atomWithStorage getOnInit + 写入口归一 RESET）；ky hooks 三件套——beforeRequest 注 Bearer、afterResponse 收续期头静默替换、401 清 token 跳登录（登录接口自身 401 除外）；`_authenticated` 无路径布局 beforeLoad 守卫
+- [x] 登录页（antd Form 双层校验体验层 + CSS Modules 样板）+ 临时首页（currentUser 角色/权限点回显）
+- [x] 浏览器矩阵 10 项：未登录重定向、rules 拦空表单、错密码 toast 不跳转、登录跳首页、刷新持久化、已登录访问 /login 弹回、登出、篡改 token 401 自愈回登录、续期替换 localStorage 实证（阈值调大法）、登出 storage 零残留
 
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
@@ -77,6 +82,7 @@
 | 2026-07-31 | 1h    | common 横切：winston 摘要日志（middleware 全出口）、RedisModule、MailModule（jsonTransport 降级）、忘记密码验证码闭环（三防）                       | 横切层上线（35 项矩阵）     |
 | 2026-07-31 | 1h    | schedule/上传：图片上传（随机落盘名+白名单）+ serve-static 公开、excel 导入（行级校验+原子入库）、活动状态每分钟对账（时钟源统一坑）                | 后端阶段收官（22 项矩阵）   |
 | 2026-07-31 | 1h    | 契约链路：swagger 同源抽取 + openapi 导出脚本、React18+Vite 最小脚手架、orval 9 模块生成、ky 剥壳 mutator，浏览器三链路实测                         | 契约链路打通（§9.3 收官）   |
+| 2026-08-27 | 1h    | 前端开工：文件路由 + React Compiler + §5.4 依赖收口；登录页、beforeLoad 守卫、ky 认证三 hooks（注 token/收续期头/401 分流）                         | 登录闭环上线（10 项矩阵）   |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -108,3 +114,7 @@
 | 2026-07-31 | openapi.json 与 orval 产物都进 git（.prettierignore 排除生成物）              | 契约演进靠 commit diff review（PLAN §7#9）；生成物不 lint 不手改，重新生成即覆盖                     |
 | 2026-07-31 | 契约阶段即立前端最小脚手架（React18+Query+ky，Router/antd 留 §9.4）           | orval 产物要能 typecheck + 浏览器实调才算打通；只导出 json 不消费等于没验证                          |
 | 2026-07-31 | 失败壳在 mutator 压成 ApiError(code/message/detail)                           | Query onError 只认一种错误形状；字段级 400 数组保留在 detail 供表单回填（PLAN §5.6 双层校验）        |
+| 2026-08-27 | antd 锁 5.x（6 已发布，pnpm 默认拉到 ^6）                                     | PLAN 按 5 拍板（React18 支持区间/主题 token）；pro-components 生态按 5 配套；升 6 是独立换代不顺带   |
+| 2026-08-27 | React Compiler 走 @vitejs/plugin-react 的 babel 插件通道                      | 脚手架是 vite7+plugin-react（非 Vite+ rolldown），§7#10 的 oxc 实验通道不适用，babel 是官方支持路径  |
+| 2026-08-27 | 401 语义分流在 ky afterResponse 统一裁决                                      | 登录接口 401=密码错交表单；其余 401=登录态失效清 token 硬跳 /login；无 refresh 接口无重放队列        |
+| 2026-08-27 | 路由守卫只判 token 存在性，不发请求验有效性                                   | beforeLoad 同步零开销；伪造/过期 token 由后端 401 + ky hook 兜底自愈，避免每次导航都打 currentUser   |

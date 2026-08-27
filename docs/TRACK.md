@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：2 后端（PLAN §9.2）**已收官**——schedule/上传上线并实测（22 项矩阵全过：上传链路/serve-static 公开访问/excel 导入原子性/活动状态定时对账）
-- **下一步**：契约链路（§9.3）——swagger 导出 openapi.json → orval 生成前端 API 层
+- **当前阶段**：3 契约链路（PLAN §9.3）**已打通**——openapi.json 导出（32 路径/30 schema）→ orval 生成 9 模块 hooks → ky mutator 剥壳，浏览器实测 health query / login mutation / ApiError(401) 三链路
+- **下一步**：前端（§9.4）——脚手架续建（TanStack Router/jotai/antd 按 PLAN §5.4 补齐）→ 登录页 → 权限四件套 → 业务页 → 看板
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -54,7 +54,12 @@
 - [x] schedule/上传：POST /upload/image（multer diskStorage、uuid+mimetype 白名单映射落盘名、2MB 流式限制）+ serve-static /uploads 公开访问；POST /product/import（exceljs、行级错误一次性收集、全对才入库单事务）；activity 状态每分钟对账（@nestjs/schedule 修正落库快照漂移，SQL 传 JS now 规避容器 UTC 时区分裂）
 - [x] 实测矩阵 22 项：上传 201/400/413/403、无 token 直读图片、路径穿越拦截、导入 3 行入库/错行整体回绝零入库/表头与假 xlsx 400、cron 实等一轮修正漂移且不误伤未漂移行、对账日志落盘
 
-### 3 契约链路 ⏳ 未开始（openapi.json → orval）
+### 3 契约链路 ✅（2026-07-31）
+
+- [x] 后端契约出口：swagger 构建抽 `src/swagger.ts`（main.ts 运行时文档与 export-openapi.ts 导出同源，永不漂移）；`pnpm --filter backend openapi` 导出 openapi.json（32 路径/30 schema，裸类型带 required，需 docker 在线）
+- [x] 前端最小脚手架：React 18 锁版 + Vite（strictPort 5173、/api proxy、@ 别名）+ TanStack Query + ky；完整依赖清单（Router/jotai/antd）留前端阶段
+- [x] orval 打通：tags-split 按 @ApiTags 拆 9 模块进 `src/apis/generated/`（进 git 不手改）；ky mutator 统一剥壳 + ApiError(code/message/detail) 归一化，字段级 400 数组存 detail 供表单回填
+- [x] 浏览器实测：health query 裸 data 直出（db/redis up）、login mutation 返回类型化 LoginVo、错密码 ApiError(401) 文案归一；typecheck 一次全绿
 
 ### 4 前端 ⏳ 未开始（脚手架 → 登录 → 权限四件套 → 业务页 → 看板）
 
@@ -71,6 +76,7 @@
 | 2026-07-30 | 1h    | product/order/activity 三业务模块：金额整数分位乘法、订单状态机、活动时间窗推导、引用拒删、decimal transformer、分页基类                            | 业务模块上线（32 项矩阵）   |
 | 2026-07-31 | 1h    | common 横切：winston 摘要日志（middleware 全出口）、RedisModule、MailModule（jsonTransport 降级）、忘记密码验证码闭环（三防）                       | 横切层上线（35 项矩阵）     |
 | 2026-07-31 | 1h    | schedule/上传：图片上传（随机落盘名+白名单）+ serve-static 公开、excel 导入（行级校验+原子入库）、活动状态每分钟对账（时钟源统一坑）                | 后端阶段收官（22 项矩阵）   |
+| 2026-07-31 | 1h    | 契约链路：swagger 同源抽取 + openapi 导出脚本、React18+Vite 最小脚手架、orval 9 模块生成、ky 剥壳 mutator，浏览器三链路实测                         | 契约链路打通（§9.3 收官）   |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -98,3 +104,7 @@
 | 2026-07-31 | excel 导入全对才入库：行级错误一次性收集，任一行错整体 400                    | 半截导入让用户对不上账；save(数组) 单事务天然原子，错误数组风格对齐 ValidationPipe                   |
 | 2026-07-31 | 活动对账 SQL 传 JS Date 参数而非 SQL NOW()                                    | 容器 mysqld 是 UTC、应用写入按本机时区，NOW() 对比落库时间判定全错；与 deriveStatus 同一时钟源       |
 | 2026-07-31 | multer 显式声明为 backend 直接依赖（platform-express 已传递携带 2.2.0）       | 显式 import 的包必须显式声明：pnpm 严格隔离下 phantom dependency 编译期被 @types 掩盖、运行期才炸    |
+| 2026-07-31 | swagger 文档构建抽 `src/swagger.ts` 共享（运行时 /api-docs 与导出脚本同用）   | 两处各建一份迟早漂移；契约的单一事实来源必须物理上只有一个构建入口                                   |
+| 2026-07-31 | openapi.json 与 orval 产物都进 git（.prettierignore 排除生成物）              | 契约演进靠 commit diff review（PLAN §7#9）；生成物不 lint 不手改，重新生成即覆盖                     |
+| 2026-07-31 | 契约阶段即立前端最小脚手架（React18+Query+ky，Router/antd 留 §9.4）           | orval 产物要能 typecheck + 浏览器实调才算打通；只导出 json 不消费等于没验证                          |
+| 2026-07-31 | 失败壳在 mutator 压成 ApiError(code/message/detail)                           | Query onError 只认一种错误形状；字段级 400 数组保留在 detail 供表单回填（PLAN §5.6 双层校验）        |

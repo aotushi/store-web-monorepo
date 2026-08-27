@@ -62,6 +62,19 @@
 - **上传安全的最小闭环**：落盘文件名 100% 服务端生成（uuid + mimetype→扩展名白名单映射），原始文件名只当展示数据——一次性防掉路径穿越、双扩展（`a.php.jpg`）、特殊字符三类攻击；大小限制在 multer limits 层流式中断而非收完再拒；能引申：mimetype 是客户端声明可伪造，生产加 magic bytes 深检（file-type 库），公开目录里绝不能出现可被服务端解释执行的文件类型
 - **落库快照 vs 实时推导的对账模式**：活动状态落库是查询性能取舍（列表不用每行算时间窗），代价是时间流逝状态漂移（进行中→已结束不会自己变）；每分钟 cron 一条 CASE UPDATE 只改漂移行（WHERE status <> 期望值，无漂移零写入零日志）；验证时"未漂移行不被误改"与"漂移行被修正"同样重要——对账任务最怕误伤；能引申容器 UTC 与应用时区的时钟源一致性坑
 
-## 契约链路阶段（待开始）
+## 契约链路阶段
+
+### 知识点
+
+- **契约三方对齐是一个"谁负责壳"的分工问题**（PLAN §7#11 落地）：后端 ResponseInterceptor 加 `{code,data,message}` 壳 → swagger 文档保持**裸类型**（壳是传输细节不是业务契约，写进 schema 会让每个类型都套一层泛型噪音）→ 前端 mutator 统一剥壳返回 `shell.data`。三方各守一环，orval 生成的类型恰好就是裸 data 形状，业务代码全程无感
+- **swagger 运行时文档与导出契约必须同源**：`DocumentBuilder` 配置抽成 `buildOpenApiDocument(app)` 共享函数，main.ts 的 /api-docs 与 export-openapi.ts 都调它——两处各写一份的话，加个 `addBearerAuth` 只改一边就漂移了。导出脚本要 `NestFactory.create(AppModule)` 完整实例化（装饰器元数据要模块加载后才齐），所以**导出依赖 db/redis 在线**——这是"从运行时提取契约"路线的固有代价，换取的是零手工维护
+- **orval 的两个契约点**：① hook 名来自 operationId（`AuthController_login` → `useAuthControllerLogin`），后端 controller/方法名就是前端 API 命名的源头，改名是 breaking change；② `tags-split` 按 `@ApiTags` 拆目录，后端模块边界直接映射成前端 API 目录结构——装饰器纪律（全量 @ApiProperty、@ApiTags 不缺）在这一步兑现回报
+- **ky 的 `prefixUrl` 约定**：设了 prefixUrl 后 input **不允许以 `/` 开头**（会直接 throw），而 openapi 路径天然带 `/`——mutator 里 `url.replace(/^\//, '')` + `prefixUrl: '/'` 过桥；这是 ky 有意的设计（防止使用者误以为 `/x` 会覆盖 prefixUrl 的路径部分）
+- **preview 的 launch.json 读会话 cwd 根**（`E:\code\github\.claude\launch.json`），不是项目自己的 `.claude/launch.json`——多项目工作区下 dev server 配置要登记到根文件才生效，项目内那份只当文档
+
+### 面试可讲
+
+- **后端代码作为类型单一事实来源**：swagger 装饰器 → openapi.json → orval 生成 TS 类型 + TanStack Query hooks，前端"手写 API 层"整个消失，后端改 DTO 前端 typecheck 直接红——对比手写共享 types 包方案（要人肉同步、漂移无感知）和 tRPC 方案（类型直通但绑死 TS 全栈、丢标准 OpenAPI 生态）；能讲清 openapi.json 与生成物**进 git** 的理由：契约变更在 code review 的 diff 里可见，而不是藏在 CI 的生成步骤里
+- **错误归一化的分层**：HTTP 层杂音（超时/断网/非 2xx）与业务失败壳在 mutator 收敛成单一 `ApiError(code, message, detail)`，Query 的 onError 只认一种形状；字段级 400 的 message 数组不丢——文案压成"请求参数有误"、原数组存 detail 供表单逐字段回填，对应双层校验里"后端兜底、前端体验"的分工
 
 ## 前端阶段（待开始）

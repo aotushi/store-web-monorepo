@@ -3,12 +3,12 @@
 > 单一入口掌握**接续点 / 进度 / 时间投入 / 临场决策**；每个工作 session 结束时更新本文件。
 > 姊妹篇：[ISSUES.md](./ISSUES.md)（问题与坑）｜ [LEARNED.md](./LEARNED.md)（学习收获与面试素材）｜ [PLAN.md](./PLAN.md)（开工前决策，只在大方向变化时修订）
 
-**最后更新**：2026-08-27
+**最后更新**：2026-08-28
 
 ## NOW（会话接续点）
 
-- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅（ProLayout 壳 + 菜单过滤 + 页面守卫 + `<Permission>`，双账号浏览器矩阵 + vitest 6 用例）
-- **下一步**：业务页 CRUD 样板（PLAN §5.6）——ProTable × TanStack Query、列表筛选/分页状态进 URL search params；以用户管理为样板模块，`<Permission>` 正式用法届时替换首页演示卡
+- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅（用户管理页：URL 驱动 ProTable × TanStack Query、双层校验 400 回填、`<Permission>` 正式用法上岗）
+- **下一步**：首页看板切片——数据可视化（订单/商品统计），或按 PLAN §5.6 复制样板铺开剩余业务页（角色/商品/订单/活动）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -71,23 +71,26 @@
 - [x] ProLayout mix 壳进 `_authenticated` 布局路由：beforeLoad ensureQueryData 预取 currentUser 进 Query 缓存 + 路由 context（子路由守卫/组件共享零重复请求）；menuItemRender 挂 router Link、受控 location、登出下拉
 - [x] 7 张占位页（beforeLoad requireCode）+ /403 落点 + 首页改权限演示页（页面守卫豁免、菜单仍按 Home 码过滤）；vitest 落地纯逻辑必测（PLAN §5.7）：can/filterMenu 6 用例贴种子数据形状
 - [x] 浏览器矩阵双账号：超管全菜单 5 顶级项 + 旁路三按钮全见 + /system/user 200；服务员菜单仅 首页+商品管理>热销商品、delete:role fallback 呈现、/system/user 与 /order → 403、/product/hot 放行、403 回首页正常
+- [x] 业务页 CRUD 样板（用户管理，PLAN §5.6）：validateSearch 归一化 page/pageSize/username 进 URL（默认值不进）、完全受控 ProTable × useUserControllerList（keepPreviousData）、新建（复用开放注册）/编辑（RoleManage 门控角色下拉）/冻结解冻/删除（Popconfirm+末页回退）、行内 `<Permission>` 正式用法 + isSelf 禁自冻自删、applyFieldErrors 把后端 400 字段级数组回填 antd 表单（vitest 4 用例，累计 10）
+- [x] 浏览器矩阵：搜索/重置/直链回填/翻页/pageSize 全走 URL 且刷新可恢复；33 字用户名后端 400 精准回填字段下方；创建→列表失效重取；编辑落库跨重启验证（email+角色 Tag 回显）；冻结↔解冻状态翻转；?username=e2e&page=2 删除唯一行自动回第 1 页；test1 直访 /system/user → /403；e2e 数据清理恢复 5 用户基线
 
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
 ## 时间线（session 日志；耗时为粗估）
 
-| 日期       | 耗时≈ | 内容                                                                                                                                                | 产出                        |
-| ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| 2026-07-30 | 0.5h  | 骨架期开工：监控文档三件套、git init、workspace、工程化两道闸、docker-compose 起库并验证                                                            | 骨架完成（待提交）          |
-| 2026-07-30 | 1h    | 首次提交 + 建远程仓库（aotushi）；后端开工：NestJS 11 脚手架、响应壳/异常/校验全局链路、config Joi、TypeORM 连 3307、health+swagger，起服务实测通过 | 后端骨架上线（feat commit） |
-| 2026-07-30 | 1.5h  | 仓库更名 store-web-monorepo（compose 项目名解耦）；auth+RBAC：JWT 登录、全局双守卫、滑动续期、三实体映射，9 项实测 + 续期响应头实证                 | RBAC 核心上线               |
-| 2026-07-30 | 1h    | user/role CRUD：注册/分页/编辑/冻结/删除 + 关系整体替换 + 事务清中间表；踩出种子数据真相（超管无按钮码 → userType 旁路；roleId=4 孤儿行）           | CRUD 上线（25 项矩阵）      |
-| 2026-07-30 | 1h    | product/order/activity 三业务模块：金额整数分位乘法、订单状态机、活动时间窗推导、引用拒删、decimal transformer、分页基类                            | 业务模块上线（32 项矩阵）   |
-| 2026-07-31 | 1h    | common 横切：winston 摘要日志（middleware 全出口）、RedisModule、MailModule（jsonTransport 降级）、忘记密码验证码闭环（三防）                       | 横切层上线（35 项矩阵）     |
-| 2026-07-31 | 1h    | schedule/上传：图片上传（随机落盘名+白名单）+ serve-static 公开、excel 导入（行级校验+原子入库）、活动状态每分钟对账（时钟源统一坑）                | 后端阶段收官（22 项矩阵）   |
-| 2026-07-31 | 1h    | 契约链路：swagger 同源抽取 + openapi 导出脚本、React18+Vite 最小脚手架、orval 9 模块生成、ky 剥壳 mutator，浏览器三链路实测                         | 契约链路打通（§9.3 收官）   |
-| 2026-08-27 | 1h    | 前端开工：文件路由 + React Compiler + §5.4 依赖收口；登录页、beforeLoad 守卫、ky 认证三 hooks（注 token/收续期头/401 分流）                         | 登录闭环上线（10 项矩阵）   |
-| 2026-08-27 | 1h    | 权限四件套：can/requireCode/filterMenu/`<Permission>` + ProLayout 壳（context 预取 currentUser）+ 7 占位页 + vitest 6 用例；双账号浏览器矩阵        | 权限四件套上线              |
+| 日期       | 耗时≈ | 内容                                                                                                                                                | 产出                         |
+| ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 2026-07-30 | 0.5h  | 骨架期开工：监控文档三件套、git init、workspace、工程化两道闸、docker-compose 起库并验证                                                            | 骨架完成（待提交）           |
+| 2026-07-30 | 1h    | 首次提交 + 建远程仓库（aotushi）；后端开工：NestJS 11 脚手架、响应壳/异常/校验全局链路、config Joi、TypeORM 连 3307、health+swagger，起服务实测通过 | 后端骨架上线（feat commit）  |
+| 2026-07-30 | 1.5h  | 仓库更名 store-web-monorepo（compose 项目名解耦）；auth+RBAC：JWT 登录、全局双守卫、滑动续期、三实体映射，9 项实测 + 续期响应头实证                 | RBAC 核心上线                |
+| 2026-07-30 | 1h    | user/role CRUD：注册/分页/编辑/冻结/删除 + 关系整体替换 + 事务清中间表；踩出种子数据真相（超管无按钮码 → userType 旁路；roleId=4 孤儿行）           | CRUD 上线（25 项矩阵）       |
+| 2026-07-30 | 1h    | product/order/activity 三业务模块：金额整数分位乘法、订单状态机、活动时间窗推导、引用拒删、decimal transformer、分页基类                            | 业务模块上线（32 项矩阵）    |
+| 2026-07-31 | 1h    | common 横切：winston 摘要日志（middleware 全出口）、RedisModule、MailModule（jsonTransport 降级）、忘记密码验证码闭环（三防）                       | 横切层上线（35 项矩阵）      |
+| 2026-07-31 | 1h    | schedule/上传：图片上传（随机落盘名+白名单）+ serve-static 公开、excel 导入（行级校验+原子入库）、活动状态每分钟对账（时钟源统一坑）                | 后端阶段收官（22 项矩阵）    |
+| 2026-07-31 | 1h    | 契约链路：swagger 同源抽取 + openapi 导出脚本、React18+Vite 最小脚手架、orval 9 模块生成、ky 剥壳 mutator，浏览器三链路实测                         | 契约链路打通（§9.3 收官）    |
+| 2026-08-27 | 1h    | 前端开工：文件路由 + React Compiler + §5.4 依赖收口；登录页、beforeLoad 守卫、ky 认证三 hooks（注 token/收续期头/401 分流）                         | 登录闭环上线（10 项矩阵）    |
+| 2026-08-27 | 1h    | 权限四件套：can/requireCode/filterMenu/`<Permission>` + ProLayout 壳（context 预取 currentUser）+ 7 占位页 + vitest 6 用例；双账号浏览器矩阵        | 权限四件套上线               |
+| 2026-08-28 | 1.5h  | 业务页 CRUD 样板（用户管理）：URL 驱动受控 ProTable、四操作全链路、双层校验 400 回填实测（33 字用户名）、末页删除回退、applyFieldErrors + vitest    | CRUD 样板上线（feat commit） |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -128,3 +131,9 @@
 | 2026-08-27 | 首页页面守卫豁免，但菜单里"首页"仍按 Home 码过滤                              | 登录后固定落地 /，若设门槛则无 Home 码角色（种子 rid3 实况）登录成功即 403 死角                      |
 | 2026-08-27 | currentUser 在布局路由 beforeLoad 用 ensureQueryData 预取                     | 写进 Query 缓存 + 路由 context 双出口，子路由守卫与组件共享同一份，导航零重复请求                    |
 | 2026-08-27 | vitest 随权限切片落地（零独立配置）                                           | PLAN §5.7 纯逻辑必测清单第一项就是权限过滤；复用 vite 配置即跑，6 用例贴种子数据形状                 |
+| 2026-08-28 | 列表状态（page/pageSize/username）全进 URL，默认值不进 URL                    | URL 是唯一事实来源：直链可分享、刷新/回退自然恢复、组件零 useState；validateSearch 归一化脏参数      |
+| 2026-08-28 | ProTable 完全受控（不用 request 自取数，options 关掉）                        | 数据归 TanStack Query（缓存/失效/keepPreviousData），ProTable 只当渲染层；request 模式是第二数据源   |
+| 2026-08-28 | 新建用户复用开放注册接口（不加管理端专用创建）                                | 复刻口径后端本就无此接口；密码策略/重名校验与注册天然同源，避免两套 DTO 漂移                         |
+| 2026-08-28 | 编辑表单角色下拉按 RoleManage 双门控（字段渲染 + role/list 请求 enabled）     | 仅有 UserManage 的账号打开编辑不该发必 403 的请求；EditUserDto 不传 roleIds = 角色不动，语义正好     |
+| 2026-08-28 | 前端故意不复刻 username 32 字上限规则                                         | 留作双层校验实测口：33 字触发后端 400 字段级数组 → applyFieldErrors 回填表单项，契约闭环有实证       |
+| 2026-08-28 | 删除末页唯一行后主动导航 page-1                                               | 只靠 invalidate 会停在空页；URL 驱动下改 URL 即改数据，比读响应算最大页薄得多                        |

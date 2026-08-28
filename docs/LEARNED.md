@@ -90,10 +90,17 @@
 - **ProLayout 接非配套路由器的三个挂点**：它默认假设 umi/react-router，接 TanStack Router 要 ① `location={{ pathname }}`（从 useRouterState 取，受控当前项高亮）② `menuItemRender` 把菜单项包进 router 的 `<Link>`（否则点击整页刷新）③ `menuDataRender` 返回过滤后的树（me 变更即重算）；菜单树与路由树是**两份声明**（菜单是导航子集，403/登录页不进菜单），不必强求单一来源
 - **菜单过滤规则也要"考古"出来而不是拍脑袋**：直觉规则"目录码控目录、叶子码控叶子"在种子数据下直接翻车——服务员挂了 HotProductList 却没挂 ProductManage 目录码，超管角色同样缺目录码；正确规则只能是"叶子看自身码、目录看是否有可见子项"。教训同后端旁路一例：**权限模型的语义藏在数据里**，实现前先把种子数据摸透
 - **Browser pane 的 console 按 origin 跨重启累计**：preview 停起后 read_console_messages 仍会吐出上一轮会话的旧错误——定位问题先交叉验证（network 面板本轮请求状态 + 后端日志 grep），本轮全 200/零 401 即可断定 console 里的 401 是历史残留；否则会追着不存在的 bug 跑
+- **exceptionFactory ↔ setFields 的契约闭环**：后端 ValidationPipe exceptionFactory 定制 400 形状 `[{field, errors[]}]` → mutator 原样存进 `ApiError.detail` → `applyFieldErrors` 认出数组形状就 `form.setFields` 逐字段回填、认不出（409 重名等 detail 是字符串）返回 false 交调用方 toast——一个分流函数吃掉所有 mutation onError；字段名是运行时数据，`NamePath<Values>` 编译期无法窄化，单点断言并注释即可
+- **URL 单一事实来源的完整落法**：TanStack Router `validateSearch` 把脏参数归一成干净类型（page 下限、pageSize 白名单、空串剔除）+ **默认值不写进 URL**（page=1/pageSize=10 序列化时省略，URL 保持最短语义）+ 所有交互一律 `navigate({ search: updater })`；列表组件零 useState，Query key 天然含 search params——直链/刷新/回退/翻页全是同一机制；`placeholderData: keepPreviousData` + `loading={isFetching}` 让翻页保留旧数据不闪骨架
+- **ProTable 受控接 TanStack Query 的边界**：不碰 `request` 属性（那是 ProTable 内建数据流，接上等于第二数据源，缓存/失效/重试全失控）；dataSource/loading/pagination 全受控 + `options={false}` 关掉自带工具栏刷新；URL→搜索表单的回显靠 `formRef` + useEffect 同步（直链进来搜索框要有值）；invalidate 用 orval 的 `getXxxQueryKey()` 做前缀匹配，改一条数据全部分页缓存作废
+- **rc-motion 动画依赖合成帧——无头/未显示环境的排查套路**：Browser pane 未显示时页面不合成帧，antd Modal 的 zoom 动画卡在 `appear-prepare`/`leave-start`——React open 状态已翻转但 wrap 不撤、`afterClose`（含 resetFields）不触发；这不是代码 bug，断言改走 DOM/network、每轮模态交互后强刷清场。同环境下工具注入的 fetch/XHR 全被阻断而页面自身请求正常——验证要"点页面的按钮"，不能"替页面发请求"，两者网络路径不同
+- **两条观察留档不顺手改**：① ProTable 搜索表单里按回车未触发提交（点查询按钮正常，主路径无碍）；② `ensureQueryData` 默认 staleTime 0——每次导航 currentUser 都重取（单次导航内守卫+组件仍共享一份），要减频给 queryOptions 配 staleTime 即可，当前请求 ~10ms 不值得为省它引入权限变更延迟
 
 ### 面试可讲
 
 - **滑动续期的前端半场**（与后端条目合成完整故事）：后端 Guard 临期重签放响应头 `token` → 前端 ky afterResponse 静默替换 localStorage + atom——全程业务代码无感知、无 refresh 接口、无 401 重放队列，401 唯一语义就是"重新登录"；实测手法值得讲：把重签阈值调到大于 token 寿命，任意请求即触发，断言 storage 里 token 值变化
 - **守卫为什么不在 beforeLoad 里验 token 有效性**：守卫只做同步存在性判断（零网络开销、无导航瀑布），有效性裁决权在后端——伪造/过期 token 放行后第一个接口 401，ky hook 清 token 硬跳登录，形成自愈闭环；对比"每次导航先 await currentUser"方案：多一次串行请求且仍然防不住"守卫过后 token 才过期"的窗口
 - **一份权限点数据的前后端双投影**：同一张 18 码权限表，后端消费点是 `@RequirePermission(code)` + PermissionGuard（安全边界），前端消费点是菜单过滤 filterMenu、页面守卫 requireCode、按钮 `<Permission>`/usePermission（三级粒度，全是体验层）——前端隐藏防不住直接调接口，真正的裁决永远在后端 403；两端必须同语义（含 userType=0 旁路），否则出现"菜单可见接口 403"或"接口能通入口不见"的割裂。对比原项目前端把权限码写死在路由 meta：码表一改两边漂移
+- **双层校验的分工与实证手法**：前端 rules 只管"格式即时反馈"（必填/长度/邮箱，体验层），后端 class-validator 是权威裁决（安全层）；两边不必逐条复刻——本项目**故意**不在前端写 username 32 字上限，33 字提交换来后端 400 字段级数组、`applyFieldErrors` 把文案精准回填到那个表单项下方，modal 不关、用户改完重交。这一刀让"前端校验可绕过、后端才是真校验"从口号变成可演示的闭环；顺带讲 detail 数组/字符串两形状的分流（字段回填 vs 全局 toast）
+- **列表页的"无状态组件"论**：page/pageSize/筛选全推进 URL 后，列表组件本身零 useState——所有交互都是"改 URL"，数据是"URL 的函数"（Query key 含 search params，URL 变→key 变→自动重取）；直链分享、刷新恢复、浏览器回退、**末页删除唯一行自动回上一页**（就是一次 navigate page-1）全是同一套机制的免费收益。对比 useState 方案：这四个能力每个都要单独写状态同步，还躲不开"刷新丢页码"的经典缺陷
 - **"登录成功即 403"死角分析**：登录后固定 navigate('/')，若首页也挂权限门槛，无 Home 码的角色（种子 rid3 实况）体验就是"密码对了却进不去系统"——落地页豁免 + 菜单照常过滤是常见解法；能引申：权限系统设计要过一遍"每个角色登录后第一屏是什么"的用例推演，纯按资源配权限容易漏掉导航流

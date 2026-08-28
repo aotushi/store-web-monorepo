@@ -16,7 +16,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  UploadControllerUploadImageBody
+  UploadControllerUploadImageBody,
+  UploadResultVo
 } from '../storeWebAPI.schemas';
 
 import { customFetcher } from '../../mutator';
@@ -37,7 +38,7 @@ if(uploadControllerUploadImageBody.file !== undefined) {
  formData.append(`file`, uploadControllerUploadImageBody.file)
  }
 
-      return customFetcher<void>(
+      return customFetcher<UploadResultVo>(
       {url: `/api/upload/image`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal

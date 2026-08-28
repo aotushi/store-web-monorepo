@@ -209,12 +209,6 @@ export interface CreateProductDto {
   status?: CreateProductDtoStatus;
 }
 
-/**
- * 商品图片
- * @nullable
- */
-export type ProductImages = { [key: string]: unknown } | null;
-
 export interface Product {
   /** 商品 id */
   id: number;
@@ -224,7 +218,7 @@ export interface Product {
    * 商品图片
    * @nullable
    */
-  images: ProductImages;
+  images: string | null;
   /** 商品描述 */
   desc: string;
   /** 商品状态 0 未上架 1 已上架 2 已下架 */
@@ -275,6 +269,11 @@ export interface UpdateProductStatusDto {
   id: number;
   /** 商品状态 0 未上架 1 已上架 2 已下架 */
   status: UpdateProductStatusDtoStatus;
+}
+
+export interface ImportResultVo {
+  /** 成功导入条数 */
+  imported: number;
 }
 
 export interface CreateOrderDto {
@@ -477,6 +476,13 @@ export interface EditActivityDto {
   endTime?: string;
   /** 参与活动的商品 id */
   productId?: number;
+}
+
+export interface UploadResultVo {
+  /** 可公开访问的图片路径（serve-static /uploads） */
+  url: string;
+  /** 文件大小（字节） */
+  size: number;
 }
 
 /**

@@ -67,14 +67,20 @@ export async function customFetcher<T>(config: FetcherConfig): Promise<T> {
     if (value !== undefined && value !== null) searchParams.set(key, String(value));
   }
 
+  // multipart：FormData 必须走 body 且不能手动设 Content-Type（boundary 由浏览器生成），
+  // 而 orval 对 multipart 接口会硬编码一个无 boundary 的 'Content-Type' 头，这里丢弃它
+  const isForm = data instanceof FormData;
+  const { 'Content-Type': _dropped, ...restHeaders } = headers ?? {};
+
   let shell: ResponseShell<T>;
   try {
     shell = await client(url.replace(/^\//, ''), {
       method,
       prefixUrl: '/',
       searchParams,
-      json: data === undefined ? undefined : data,
-      headers,
+      ...(isForm
+        ? { body: data, headers: restHeaders }
+        : { json: data === undefined ? undefined : data, headers }),
       signal,
     }).json<ResponseShell<T>>();
   } catch (err) {

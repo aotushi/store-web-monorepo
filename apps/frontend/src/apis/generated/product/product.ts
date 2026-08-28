@@ -27,6 +27,7 @@ import type {
 import type {
   CreateProductDto,
   EditProductDto,
+  ImportResultVo,
   Product,
   ProductControllerImportProductsBody,
   ProductControllerListParams,
@@ -427,7 +428,7 @@ if(productControllerImportProductsBody.file !== undefined) {
  formData.append(`file`, productControllerImportProductsBody.file)
  }
 
-      return customFetcher<void>(
+      return customFetcher<ImportResultVo>(
       {url: `/api/product/import`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal

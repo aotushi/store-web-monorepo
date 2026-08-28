@@ -19,7 +19,8 @@ export class Product {
   @Column({ length: 50 })
   name: string;
 
-  @ApiProperty({ description: '商品图片', nullable: true })
+  // 联合类型 string | null 反射不出元数据，type 须显式给，否则生成物退化成 object
+  @ApiProperty({ description: '商品图片', type: String, nullable: true })
   @Column({ type: 'text', nullable: true })
   images: string | null;
 

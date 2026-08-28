@@ -7,10 +7,18 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { RequirePermission } from '../common/decorators/require-permission.decorator';
 import { IMAGE_EXT, UPLOAD_DIR } from './upload.constants';
+import { UploadResultVo } from './vo/upload-result.vo';
 
 @ApiTags('upload')
 @ApiBearerAuth()
@@ -40,7 +48,8 @@ export class UploadController {
   @ApiBody({
     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
   })
-  uploadImage(@UploadedFile() file: Express.Multer.File) {
+  @ApiOkResponse({ type: UploadResultVo })
+  uploadImage(@UploadedFile() file: Express.Multer.File): UploadResultVo {
     if (!file) throw new BadRequestException('缺少上传文件（字段名 file）');
     // /uploads 由 serve-static 在 middleware 层暴露：不走 api 前缀，也不过全局守卫（商品图需公开可见）
     return { url: `/uploads/${file.filename}`, size: file.size };

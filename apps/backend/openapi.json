@@ -874,8 +874,15 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultVo"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1323,8 +1330,15 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResultVo"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1842,7 +1856,7 @@
             "description": "商品名称"
           },
           "images": {
-            "type": "object",
+            "type": "string",
             "description": "商品图片",
             "nullable": true
           },
@@ -1948,6 +1962,18 @@
         "required": [
           "id",
           "status"
+        ]
+      },
+      "ImportResultVo": {
+        "type": "object",
+        "properties": {
+          "imported": {
+            "type": "number",
+            "description": "成功导入条数"
+          }
+        },
+        "required": [
+          "imported"
         ]
       },
       "CreateOrderDto": {
@@ -2319,6 +2345,23 @@
         },
         "required": [
           "id"
+        ]
+      },
+      "UploadResultVo": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "可公开访问的图片路径（serve-static /uploads）"
+          },
+          "size": {
+            "type": "number",
+            "description": "文件大小（字节）"
+          }
+        },
+        "required": [
+          "url",
+          "size"
         ]
       }
     }

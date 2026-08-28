@@ -19,7 +19,8 @@ export default defineConfig({
     port: 5173,
     // 端口被占直接报错，不许静默漂移（漂移会让 proxy/调试对着旧进程）
     strictPort: true,
-    // 后端 3000；前端代码统一请求相对路径 /api/**（PLAN §5.7）
-    proxy: { '/api': 'http://localhost:3000' },
+    // 后端 3000；前端代码统一请求相对路径 /api/**（PLAN §5.7）；
+    // /uploads 是商品图静态资源（serve-static），生产同源部署时网关需同样转发
+    proxy: { '/api': 'http://localhost:3000', '/uploads': 'http://localhost:3000' },
   },
 });

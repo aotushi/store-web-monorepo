@@ -30,6 +30,7 @@ import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 import { Product } from './entities/product.entity';
 import { ProductImportService } from './product-import.service';
 import { ProductService } from './product.service';
+import { ImportResultVo } from './vo/import-result.vo';
 import { ProductListVo } from './vo/product-list.vo';
 
 @ApiTags('product')
@@ -93,6 +94,7 @@ export class ProductController {
   @ApiBody({
     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
   })
+  @ApiOkResponse({ type: ImportResultVo })
   importProducts(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('缺少上传文件（字段名 file）');
     return this.importService.importFromExcel(file.buffer);

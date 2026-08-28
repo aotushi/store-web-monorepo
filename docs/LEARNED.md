@@ -104,6 +104,8 @@
 - **枚举含 0 的 URL 状态要"字面量收口"**：status 0/1/2 过 falsy 判断会把"未上架"当没筛选，一律 `!== undefined`；URL 层进来是 number、antd valueEnum 表单层是 string——单一 `parseStatus(v): 0|1|2|undefined` 函数收口两个来源，逐字面量比较让 TS 自然窄化，返回类型正好对上 orval 生成的参数枚举（const 对象 + typeof keyof 模式），全程零断言
 - **自动化文件上传走"页面内存造件"**：canvas.toBlob → `new File` → `DataTransfer` → 赋给 `input[type=file].files` + dispatch change——触发的就是页面自身 Upload 的 customRequest 链路（请求由页面发出，绕开"工具注入 fetch 被阻断"的限制）；xlsx 等复杂二进制在 Node 里用**后端同款库**（exceljs）生成、放 vite public 目录、页面 fetch 回来包成 File，测完删净。配合发现一坑：中文经 bash→docker exec→mysql 三层传参会乱码，清理数据用 id 不用中文名匹配
 - **引用检查的表口径要先摸数据契约**：商品拒删只查 store_order 主表（冗余 productId 快照列）不查 store_order_product 中间表——两表在下单事务里同写（"跟随维护"），主表有引用则中间表必有，查一张就够；验收时直插中间表没拦住，一度以为后端漏查，实际是**测试数据违反了业务不变量**（真实业务不存在只有中间表行的状态）。教训：造夹具前先读写入方代码，夹具必须符合业务事务的一致性形状
+- **状态机按钮做条件渲染而非置灰**：付款只在 status=0 渲染、取消在 0/1 渲染、2 终态两者皆无——非法流转对用户不是"暂不可用"（置灰的语义）而是"不存在的操作"，前端渲染逻辑就是后端 ORDER_TRANSITIONS 的镜像文档；按钮藏了不等于安全，"选中商品后被人下架再提交"的竞态窗口由后端 400 兜底（实测：弹窗保持打开可改选，错误文案直达）。前端管"常态不可见"，后端管"任何时序都不可为"
+- **契约坑的同型复现是修在源头的复利**：Order.desc 与 Product.images 是同一个坑（`string | null` 联合反射成 Object → 生成 `{[key:string]:unknown}|null`），第二次照方抓药一分钟修完——上个切片把修复规律记进文档（"nullable 字段必须显式 type"），这次写页面前先扫了一遍生成物就抓到它；对比若当时 cast 糊过去，这次还得重新踩一遍排查过程
 
 ### 面试可讲
 
@@ -119,3 +121,5 @@
 - **四码门控矩阵（页面码与操作码分离的完整形态）**：用户/角色页是"页面码=操作码"的退化形态（UserManage 既开门又控钮），商品页才是完整形态——ProductList 只开门，新建/编辑/导入挂 ProductManage、上下架挂 updateStatus:product、删除挂 delete:product，一行三码。决定性实证：给服务员临时加 ProductList 单码 → 7 行数据正常渲染但操作列全空、工具栏零按钮——页面可见性与操作可用性是两套独立授权。能引申：这正是"页面级权限做粗、按钮级权限做细"的 RBAC 分层落地，前端 `<Permission code>` 的 code 直接对齐后端 `@RequirePermission` 的 code，两端同一张码表
 - **multipart 上传的 Content-Type 是"谁都不能手写"的头**：boundary 每次请求随机生成，`multipart/form-data; boundary=----xxx` 只能由浏览器在序列化 FormData 时产出——手写（包括代码生成器 orval 生成的）必然缺 boundary，后端 busboy/multer 直接 400 "Boundary not found"。修复位置选在 mutator（所有生成请求的必经点）而非逐接口打补丁：`instanceof FormData` 分流 + 丢弃伪头，未来任何 multipart 接口零配置正确。可延伸：axios 自动删这个头所以坑少被发现，fetch/ky 尊重显式头所以坑必现——"库替你擦屁股"和"库忠实执行"两种哲学
 - **excel 导入的错误呈现是契约形状驱动的**：后端行级 400 detail `[{row, errors[]}]` 与字段级 `[{field, errors[]}]` 同风格不同键——前者没有对应表单字段，applyFieldErrors 无从回填，型别守卫认出 row 形状后走 Modal 逐行呈现（"第 N 行：错误1；错误2"），字符串 detail（表头不符/非法文件）继续走 toast；配上后端"全对才入库"（好行也不进），用户拿到的是**一次修完的完整清单**而非挤牙膏式逐行报错。设计对仗：收集全部错误一次抛 ↔ 呈现全部错误一个框
+- **门控粒度是后端接口码分布的投影（三码 vs 四码对比）**：订单页 OrderManage 一码兼页面+下单+列表+详情，只有状态流转（cancel:order）和删除（delete:order）另设码——于是"详情/新建"按钮**不包** `<Permission>`（进得来页必有码，包了是假防护真噪音），付款/取消/删除才包；对比商品页 ProductList 只开门、一行三操作码。决定性实证做到接口层同构：临时给服务员单授 OrderManage → 页面可进、新建可见、行内只剩详情，同一账号直调接口 create 201 / updateOrder 403 / delete 403——**按钮可见性与接口权限逐码一致**。结论：前端不发明门控粒度，`<Permission>` 的分布抄后端 `@RequirePermission` 的分布，码表是唯一设计源
+- **金额的"权威在服务端"要做成协议而不是约定**：CreateOrderDto 里根本没有金额字段——前端想篡改都没有载体，服务端按商品价快照 × 数量 × 折扣用整数分位乘法算出 price/discountPrice；前端弹窗的金额预览用**同款 moneyMul 算法**并明示"以后端为准"，实测预览 ¥60.00/¥52.80 与响应逐分一致——不一致就是两端算法漂移的报警器。可延伸：快照语义的可视化——详情抽屉把商品当前价并列在订单快照价旁，调价 26→30 后 Tag"与下单时不同"点亮而订单价纹丝不动，"订单是历史事实不随商品变"从字段设计变成肉眼可验的产品行为

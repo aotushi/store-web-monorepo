@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅ → 角色管理页 ✅ → 商品域 ✅（列表 + 热销，四码门控首例 + 图片上传 + excel 导入）
-- **下一步**：继续铺业务页（订单/活动），或首页看板切片（需后端补统计接口）
+- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅ → 角色管理页 ✅ → 商品域 ✅ → 订单页 ✅（三码形态 + 状态机按钮 + 快照对比抽屉）
+- **下一步**：活动管理页，或首页看板切片（需后端补统计接口）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -77,6 +77,8 @@
 - [x] 浏览器矩阵：4 种子角色渲染（权限点数/内置 Tag）；编辑超管树 18 节点全展开、8 个页面码精确回显不联动子按钮码；建 e2e_role_mgr（仅 RoleManage+PermissionManage）→ 重名 409 toast → 编辑整体替换 1→2 个；建 e2e_mgr 挂角色后登录实证——菜单仅 系统管理>角色/权限管理、5 行删除按钮全隐藏（`<Permission>`）、树字段可见；内置角色删除 disabled；清理回 4 角色基线
 - [x] 商品域（四码门控首例）：页面码 ProductList 只开门，新建/编辑/导入挂 ProductManage、上下架挂 updateStatus:product、删除挂 delete:product；status 枚举含 0 → parseStatus 收口 URL/表单双来源成 0|1|2 字面量；ImageUploadField 自定义控件（上传预览/移除，删图提交空串贴 PATCH 语义）；创建弹窗不放 status；导入行级 400（[{row,errors[]}]）Modal 逐行呈现、字符串 detail 走 toast；热销页只读 top10；契约三缺口在后端补齐再生成——UploadResultVo/ImportResultVo（multipart 端点原生成 void）、images 显式 type:String（string|null 联合反射成 object）、mutator 按 FormData 分流 body/json 并丢弃 orval 硬编码的无 boundary multipart 头
 - [x] 浏览器矩阵：5 种子渲染（¥格式/状态 Tag/图占位）；?status=0 直链回填不被 falsy 吞、选已上架提交 → ?status=1；名称模糊 + 重置清 URL；创建带真图上传（uuid 落盘 + 预览 + 移除按钮）；编辑回显改价图不动、移除图片落库空串（响应实证 images:""）；上下架 0→1→2 三态翻转；订单引用拒删 400 toast + 清引用后删净；导入成功 2 条 / 行级错误 Modal 三行齐全且好行未入库 / 表头不符 toast；热销 3 条按更新时间倒序无搜索无分页；test1 天然用例——/product 403、/product/hot 200、菜单只剩热销；临时授 ProductList 实证 7 行渲染但操作列全空工具栏零按钮（四码分离决定性证据）；清理回 5 商品基线
+- [x] 订单管理页（三码形态）：OrderManage 一码兼页面+下单+列表+详情（无独立页面码，与商品四码成对比），状态流转挂 cancel:order（付款/取消共用）、删除挂 delete:order；状态机按钮条件渲染镜像后端 ORDER_TRANSITIONS（0→付款/取消、1→仅取消、2 终态）；下单弹窗只列已上架商品（pageSize 100 上限口径）+ 整数分位金额预览（权威值后端算，请求体无金额字段）；详情抽屉快照对比（当前单价×数量≠订单价 → "与下单时不同"Tag）+ 商品已删防御分支；契约缺口 Order.desc 补显式 type:String（同 images 坑）再生成
+- [x] 浏览器矩阵：空表首屏 10 列齐；下单预览 ¥60.00/折后 ¥52.80 与服务端返回一致（烧鸭×3×0.88）、Select 恰列 3 已上架品；?status=0&name=烧 直链回显 + 过滤 2 条、重置清 URL、提交 → ?status=1 空列表；状态机三条边实操（0→1 付款后按钮收敛、0→2、1→2 终态只剩详情+删除）；详情抽屉 9+3 字段全、调价 26→30 实证快照 Tag（订单价 ¥52 不动）、SQL 脏单实证"商品已删除"分支；删除事务清 order_product（orderId=3 关联行随删、他单无损）；下架竞态提交 → 400"商品未上架"toast 弹窗保持；test1 天然 403 + 菜单无订单；临时授 OrderManage 决定性证据——进页 + 新建订单可见 + 行内仅详情，接口层同构（create 201 / updateOrder 403 / delete 403）；清理回零订单基线
 
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
@@ -97,6 +99,7 @@
 | 2026-08-28 | 1.5h  | 业务页 CRUD 样板（用户管理）：URL 驱动受控 ProTable、四操作全链路、双层校验 400 回填实测（33 字用户名）、末页删除回退、applyFieldErrors + vitest    | CRUD 样板上线（feat commit） |
 | 2026-08-28 | 1h    | 角色管理页：样板首次复用 + 权限树勾选（checkStrictly/双门控/挂载时机）、buildPermissionTree + vitest；自建角色挂用户端到端实证按钮级门控            | 角色页上线（feat commit）    |
 | 2026-08-28 | 1.5h  | 商品域：列表页四码门控 + 图片上传控件 + excel 导入三分支 + 热销只读页；契约三缺口后端补齐（VO×2 / images 显式 String / mutator FormData 分流）      | 商品页上线（feat commit）    |
+| 2026-08-28 | 1h    | 订单页：三码门控 + 状态机按钮条件渲染 + 快照对比抽屉 + 竞态 400 实证；desc 契约缺口同坑复现即修；决定性证据升级到接口层同构验证                     | 订单页上线（feat commit）    |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -154,3 +157,7 @@
 | 2026-08-28 | 图片移除提交空串而非 undefined                                                   | PATCH"不传即不动"：undefined 键被 JSON 序列化丢弃，"删图"会静默变成"没改"                            |
 | 2026-08-28 | 创建商品弹窗不放 status 字段                                                     | 新品默认未上架；上下架是列表页专用操作，贴后端 edit / updateStatus 接口分工                          |
 | 2026-08-28 | 导入行级 400 用 Modal 逐行呈现，不进 applyFieldErrors                            | [{row,errors[]}] 与字段级 [{field,errors[]}] 同风格不同键，行错误没有对应表单字段可回填              |
+| 2026-08-28 | 订单页详情/新建按钮不包 `<Permission>`（付款/取消/删除仍包）                     | detail/create 接口码即页面码 OrderManage，进得来页必有码；门控跟接口码走，不为对称而对称             |
+| 2026-08-28 | 状态机按钮按 record.status 条件渲染，不做置灰                                    | 非法流转对用户不是"暂不可用"而是"不存在的操作"；后端 TRANSITIONS 400 兜底，前端渲染即文档            |
+| 2026-08-28 | 下单弹窗金额只做前端预览并明示"以后端为准"                                       | 请求体根本没有金额字段（防篡改），预览用同款整数分位算法保证与后端结果一致，不一致即算法漂移信号     |
+| 2026-08-28 | 详情抽屉并列商品当前价 + 快照价，moneyMul 比对打"与下单时不同"Tag                | 快照语义不可见就等于没做；乘法比对必须走整数分位，浮点直乘会把相等误判为不等                         |

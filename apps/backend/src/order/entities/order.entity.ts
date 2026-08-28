@@ -53,7 +53,8 @@ export class Order {
   @Column({ length: 255 })
   operator: string;
 
-  @ApiProperty({ description: '订单备注', nullable: true })
+  // 联合类型 string | null 反射不出元数据，type 须显式给，否则生成物退化成 object（同 Product.images）
+  @ApiProperty({ description: '订单备注', type: String, nullable: true })
   @Column({ type: 'text', nullable: true })
   desc: string | null;
 

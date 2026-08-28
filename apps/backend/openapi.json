@@ -2039,7 +2039,7 @@
             "description": "操作员（下单人用户名）"
           },
           "desc": {
-            "type": "object",
+            "type": "string",
             "description": "订单备注",
             "nullable": true
           },
@@ -2123,7 +2123,7 @@
             "description": "操作员（下单人用户名）"
           },
           "desc": {
-            "type": "object",
+            "type": "string",
             "description": "订单备注",
             "nullable": true
           },

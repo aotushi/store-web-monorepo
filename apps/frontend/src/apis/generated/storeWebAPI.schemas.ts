@@ -287,12 +287,6 @@ export interface CreateOrderDto {
   desc?: string;
 }
 
-/**
- * 订单备注
- * @nullable
- */
-export type OrderDesc = { [key: string]: unknown } | null;
-
 export interface Order {
   /** 订单 id */
   id: number;
@@ -314,7 +308,7 @@ export interface Order {
    * 订单备注
    * @nullable
    */
-  desc: OrderDesc;
+  desc: string | null;
   /** 商品 id */
   productId: number;
   /** 创建时间 */
@@ -327,12 +321,6 @@ export interface OrderListVo {
   /** 总条数 */
   total: number;
 }
-
-/**
- * 订单备注
- * @nullable
- */
-export type OrderDetailVoDesc = { [key: string]: unknown } | null;
 
 /**
  * 关联商品（已删除时为 null）
@@ -361,7 +349,7 @@ export interface OrderDetailVo {
    * 订单备注
    * @nullable
    */
-  desc: OrderDetailVoDesc;
+  desc: string | null;
   /** 商品 id */
   productId: number;
   /** 创建时间 */

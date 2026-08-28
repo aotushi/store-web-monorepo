@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅（用户管理页：URL 驱动 ProTable × TanStack Query、双层校验 400 回填、`<Permission>` 正式用法上岗）
-- **下一步**：首页看板切片——数据可视化（订单/商品统计），或按 PLAN §5.6 复制样板铺开剩余业务页（角色/商品/订单/活动）
+- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅ → 角色管理页 ✅（样板首次复用 + 权限树勾选，checkStrictly 精确授权）
+- **下一步**：首页看板切片——数据可视化（订单/商品统计），或继续铺业务页（商品/订单/活动）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -73,6 +73,8 @@
 - [x] 浏览器矩阵双账号：超管全菜单 5 顶级项 + 旁路三按钮全见 + /system/user 200；服务员菜单仅 首页+商品管理>热销商品、delete:role fallback 呈现、/system/user 与 /order → 403、/product/hot 放行、403 回首页正常
 - [x] 业务页 CRUD 样板（用户管理，PLAN §5.6）：validateSearch 归一化 page/pageSize/username 进 URL（默认值不进）、完全受控 ProTable × useUserControllerList（keepPreviousData）、新建（复用开放注册）/编辑（RoleManage 门控角色下拉）/冻结解冻/删除（Popconfirm+末页回退）、行内 `<Permission>` 正式用法 + isSelf 禁自冻自删、applyFieldErrors 把后端 400 字段级数组回填 antd 表单（vitest 4 用例，累计 10）
 - [x] 浏览器矩阵：搜索/重置/直链回填/翻页/pageSize 全走 URL 且刷新可恢复；33 字用户名后端 400 精准回填字段下方；创建→列表失效重取；编辑落库跨重启验证（email+角色 Tag 回显）；冻结↔解冻状态翻转；?username=e2e&page=2 删除唯一行自动回第 1 页；test1 直访 /system/user → /403；e2e 数据清理恢复 5 用户基线
+- [x] 角色管理页（样板首次复用）：role/list 无分页无筛选 → 不硬造 URL 状态；权限树勾选 PermissionTreeField（自定义表单控件 value/onChange 约定，checkStrictly 精确授权，PermissionManage 双门控字段渲染+请求）；buildPermissionTree 纯函数（孤儿挂根兜底，vitest 4 用例，累计 14）；内置角色可编辑禁删；删除 Popconfirm 带级联警示（用户将失去该角色）
+- [x] 浏览器矩阵：4 种子角色渲染（权限点数/内置 Tag）；编辑超管树 18 节点全展开、8 个页面码精确回显不联动子按钮码；建 e2e_role_mgr（仅 RoleManage+PermissionManage）→ 重名 409 toast → 编辑整体替换 1→2 个；建 e2e_mgr 挂角色后登录实证——菜单仅 系统管理>角色/权限管理、5 行删除按钮全隐藏（`<Permission>`）、树字段可见；内置角色删除 disabled；清理回 4 角色基线
 
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
@@ -91,6 +93,7 @@
 | 2026-08-27 | 1h    | 前端开工：文件路由 + React Compiler + §5.4 依赖收口；登录页、beforeLoad 守卫、ky 认证三 hooks（注 token/收续期头/401 分流）                         | 登录闭环上线（10 项矩阵）    |
 | 2026-08-27 | 1h    | 权限四件套：can/requireCode/filterMenu/`<Permission>` + ProLayout 壳（context 预取 currentUser）+ 7 占位页 + vitest 6 用例；双账号浏览器矩阵        | 权限四件套上线               |
 | 2026-08-28 | 1.5h  | 业务页 CRUD 样板（用户管理）：URL 驱动受控 ProTable、四操作全链路、双层校验 400 回填实测（33 字用户名）、末页删除回退、applyFieldErrors + vitest    | CRUD 样板上线（feat commit） |
+| 2026-08-28 | 1h    | 角色管理页：样板首次复用 + 权限树勾选（checkStrictly/双门控/挂载时机）、buildPermissionTree + vitest；自建角色挂用户端到端实证按钮级门控            | 角色页上线（feat commit）    |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -137,3 +140,8 @@
 | 2026-08-28 | 编辑表单角色下拉按 RoleManage 双门控（字段渲染 + role/list 请求 enabled）     | 仅有 UserManage 的账号打开编辑不该发必 403 的请求；EditUserDto 不传 roleIds = 角色不动，语义正好     |
 | 2026-08-28 | 前端故意不复刻 username 32 字上限规则                                         | 留作双层校验实测口：33 字触发后端 400 字段级数组 → applyFieldErrors 回填表单项，契约闭环有实证       |
 | 2026-08-28 | 删除末页唯一行后主动导航 page-1                                               | 只靠 invalidate 会停在空页；URL 驱动下改 URL 即改数据，比读响应算最大页薄得多                        |
+| 2026-08-28 | 角色页不做 URL 搜索状态（role/list 无分页无筛选）                             | 接口没有的能力不硬造 URL 状态；样板的 URL 驱动只在"状态本来就该进 URL"时才成立                       |
+| 2026-08-28 | 权限树 checkStrictly（父子勾选不联动）                                        | 授权是精确 id 集合；种子实锤"挂页面码不挂按钮码""按钮挂目录下"，父子联动会在保存时篡改这类集合       |
+| 2026-08-28 | 权限树字段按 PermissionManage 双门控（字段渲染 + permission/list 请求）       | 仅有 RoleManage 的账号打开弹窗不该发必 403 的请求；字段不挂载 → 提交不带 permissionIds = 权限不动    |
+| 2026-08-28 | 内置角色（isSystem=1）编辑放行、删除按钮 disabled 而非隐藏                    | 后端语义即"可编辑禁删"（删除 400 兜底）；disabled 可见比隐藏更能传达"存在但被保护"                   |
+| 2026-08-28 | 权限树数据就绪前不挂 Tree（Spin 占位）                                        | antd defaultExpandAll 只在首次挂载生效，异步数据到达后不补展开；晚挂载一次性解决                     |

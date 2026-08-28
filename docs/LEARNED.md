@@ -95,6 +95,10 @@
 - **ProTable 受控接 TanStack Query 的边界**：不碰 `request` 属性（那是 ProTable 内建数据流，接上等于第二数据源，缓存/失效/重试全失控）；dataSource/loading/pagination 全受控 + `options={false}` 关掉自带工具栏刷新；URL→搜索表单的回显靠 `formRef` + useEffect 同步（直链进来搜索框要有值）；invalidate 用 orval 的 `getXxxQueryKey()` 做前缀匹配，改一条数据全部分页缓存作废
 - **rc-motion 动画依赖合成帧——无头/未显示环境的排查套路**：Browser pane 未显示时页面不合成帧，antd Modal 的 zoom 动画卡在 `appear-prepare`/`leave-start`——React open 状态已翻转但 wrap 不撤、`afterClose`（含 resetFields）不触发；这不是代码 bug，断言改走 DOM/network、每轮模态交互后强刷清场。同环境下工具注入的 fetch/XHR 全被阻断而页面自身请求正常——验证要"点页面的按钮"，不能"替页面发请求"，两者网络路径不同
 - **两条观察留档不顺手改**：① ProTable 搜索表单里按回车未触发提交（点查询按钮正常，主路径无碍）；② `ensureQueryData` 默认 staleTime 0——每次导航 currentUser 都重取（单次导航内守卫+组件仍共享一份），要减频给 queryOptions 配 staleTime 即可，当前请求 ~10ms 不值得为省它引入权限变更延迟
+- **antd 自定义表单控件的最小契约是 value/onChange**：组件接这对 props 就能直接放进 `Form.Item name` 下（Form 自动注入并接管状态）；PermissionTreeField 把 Tree 的 `checkedKeys`/`onCheck` 适配成这对即接入表单体系。注意 `checkStrictly` 下 onCheck 回参从数组变 `{checked, halfChecked}` 对象——同一个回调两种形状，要分流
+- **defaultExpandAll 只在首次挂载时生效**：异步数据到达后 Tree 不会补展开——`if (!query.data) return <Spin/>` 让 Tree 晚挂载、首挂即有数据；"default 前缀 props 只读一次"是 antd 通用模式（defaultValue/defaultChecked 同理），受控数据 + default 类 props 组合时挂载时机就是语义的一部分
+- **组树纯函数的兜底取向**：`buildPermissionTree` 对 parentId 指向不存在节点的行挂根呈现而非丢弃——这棵树是勾选 UI，节点丢了就永远勾不到（数据完整性 > 层级正确性）；配 4 个贴种子形状的用例（三层嵌套、孤儿挂根、按钮挂目录下）
+- **受控组件的自动化"同步双击"竞态**：脚本在同一宏任务里连点受控 Tree 两个 checkbox，第二次 onCheck 基于**未重渲染的旧 checkedKeys** 计算，第一次勾选被覆盖（React 18 批处理，事件间无渲染帧）——真实用户点击间隔有帧不会踩；自动化要把每次交互拆成独立调用。顺带一坑：antd 两字按钮渲染成"取 消"（自动插空格），按文本找按钮先 `replace(/\s/g,'')`
 
 ### 面试可讲
 
@@ -104,3 +108,6 @@
 - **双层校验的分工与实证手法**：前端 rules 只管"格式即时反馈"（必填/长度/邮箱，体验层），后端 class-validator 是权威裁决（安全层）；两边不必逐条复刻——本项目**故意**不在前端写 username 32 字上限，33 字提交换来后端 400 字段级数组、`applyFieldErrors` 把文案精准回填到那个表单项下方，modal 不关、用户改完重交。这一刀让"前端校验可绕过、后端才是真校验"从口号变成可演示的闭环；顺带讲 detail 数组/字符串两形状的分流（字段回填 vs 全局 toast）
 - **列表页的"无状态组件"论**：page/pageSize/筛选全推进 URL 后，列表组件本身零 useState——所有交互都是"改 URL"，数据是"URL 的函数"（Query key 含 search params，URL 变→key 变→自动重取）；直链分享、刷新恢复、浏览器回退、**末页删除唯一行自动回上一页**（就是一次 navigate page-1）全是同一套机制的免费收益。对比 useState 方案：这四个能力每个都要单独写状态同步，还躲不开"刷新丢页码"的经典缺陷
 - **"登录成功即 403"死角分析**：登录后固定 navigate('/')，若首页也挂权限门槛，无 Home 码的角色（种子 rid3 实况）体验就是"密码对了却进不去系统"——落地页豁免 + 菜单照常过滤是常见解法；能引申：权限系统设计要过一遍"每个角色登录后第一屏是什么"的用例推演，纯按资源配权限容易漏掉导航流
+- **权限授予界面为什么要 checkStrictly（精确集合 vs 父子联动）**：授权的本质是精确 id 集合，不是树形选区——种子数据实锤两个"联动会篡改"的形状：超管挂 OrderManage 页面码却不挂 delete:order 按钮码（父子联动打开编辑一保存就多授了删除权），delete:product 挂在目录下而非页面下（勾页面带不出它、勾目录会带出一串）；antd Tree 的 checkStrictly 正是为此设计。可延伸对比：文件选择器/组织架构选人适合联动（选区语义），授权/标签适合 strict（集合语义）——同一个控件两种语义，选错默认值是真 bug 的温床
+- **权限门控与 PATCH 语义的三层咬合**：permission/list 后端挂 PermissionManage 码，于是"仅有 RoleManage 的账号编辑角色"这个场景由三个独立机制自然合成——① 无码则树字段不渲染（不发必 403 的请求）② 字段未挂载则 validateFields 结果不含 permissionIds ③ 后端 EditRoleDto"不传即不动"——组合出"能改名改描述但碰不到权限集合"的产品语义，零专门代码。面试时能讲：这类"少写代码"不是省事，是每层语义都摆对了位置后的必然结果
+- **验收数据自给自足的实证手法**：要验证按钮级门控需要"有页面码没按钮码"的账号，但种子用户密码不可考（bcrypt 每用户盐，同密码不同 hash，反推死路）——转而用被测功能自建夹具：建角色（仅勾 RoleManage+PermissionManage）→ 建用户挂角色 → 该用户登录实证（菜单只剩两项、5 行删除按钮全隐、树字段可见）→ 删清恢复基线。功能验收与测试夹具是同一套操作，全程零 SQL、零种子数据改动；这也是"权限矩阵测试要按角色建专用账号"的缩影

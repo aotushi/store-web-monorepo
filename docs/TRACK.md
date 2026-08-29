@@ -3,12 +3,12 @@
 > 单一入口掌握**接续点 / 进度 / 时间投入 / 临场决策**；每个工作 session 结束时更新本文件。
 > 姊妹篇：[ISSUES.md](./ISSUES.md)（问题与坑）｜ [LEARNED.md](./LEARNED.md)（学习收获与面试素材）｜ [PLAN.md](./PLAN.md)（开工前决策，只在大方向变化时修订）
 
-**最后更新**：2026-08-28
+**最后更新**：2026-08-29
 
 ## NOW（会话接续点）
 
-- **当前阶段**：4 前端（PLAN §9.4）**进行中**——登录闭环 ✅ → 权限四件套 ✅ → 业务页 CRUD 样板 ✅ → 角色管理页 ✅ → 商品域 ✅ → 订单页 ✅ → 活动页 ✅（两码形态 + 时间窗推导 + 悬空按钮码实证）
-- **下一步**：首页看板切片（需后端补统计接口），业务页至此全收口
+- **当前阶段**：4 前端（PLAN §9.4）**✅ 收官**——登录闭环 → 权限四件套 → 业务页 CRUD 样板 → 角色 → 商品 → 订单 → 活动 → 首页看板 ✅（后端补 stats 聚合接口 + 数据层门控 + 手写柱状图）
+- **下一步**：阶段 5 收尾（可选项：websee/crawler 可砍；实项：CI 补 build/test、后端自动化测试、manualChunks 分包、`pnpm check` 接入 vp check）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -82,6 +82,9 @@
 - [x] 活动管理页（两码形态，唯一零契约缺口切片）：ActivityManage 一码兼页面+创建+列表+编辑（新建/编辑按钮均不包 `<Permission>`），仅删除挂 delete:activity；状态是时间窗推导的落库快照（只读呈现，编辑成功 toast 带后端重推结果）；时间窗单 RangePicker(showTime) 字段提交拆 startTime/endTime ISO、回显组 dayjs 对；商品下拉列全量含未上架（后端 create/edit 只校验存在性，与订单弹窗"仅已上架"成口径对照）；productId 列复用弹窗商品查询映射名称；前端不复刻 end>start 留后端 400 字符串 detail → toast 实测口；dayjs 补为前端直接依赖（pnpm 严格布局下 antd 传递依赖不可 import）
 - [x] 浏览器矩阵：空态 8 列齐；跨 now 窗创建 → 进行中、未来窗 → 未开始（推导实证）、拼团 Tag、未上架商品（烧排骨）创建成功、desc 留空落 ''；SQL 复核落库（status/desc_len/时间/productId 全对）；?status=1 直链回显+过滤、组合过滤（status 残留+name=拼 → 空态）、重置全清；编辑回显全五字段（RangePicker dayjs 重组、商品 label）、改窗到过去 → toast「已保存（已结束）」+ 行状态重推导；end==start → 400 字符串 detail toast 弹窗保持；test1 天然 403（持 delete:activity 但无页面码）→ 授 ActivityManage 后**悬空删除码自动激活**（新建/编辑/删除三按钮齐见，两码形态决定性证据）；接口层正交性——授权期 create 201/edit 200（只传 name 部分更新实证），revoke 后 create 403 而 **DELETE 仍 200**（操作码独立于页面码生效，前端门控只是 UX 遮罩非安全边界）；UI Popconfirm 删净回空基线、权限表恢复 5 条原状
 
+- [x] 首页看板（阶段 4 收官切片，唯一"先补后端再做前端"切片）：后端新增只读 stats 模块——GET /stats/overview 挂 Home 码（复用不新造权限点），嵌套 VO 显式类声明（counts/orderStatus/revenue/trend）防 orval 退化；日界沿用时钟源决策（JS 本地算边界传参，不用 SQL CURDATE()），近 7 日趋势 SQL 只按窗口起点取行、JS 分桶缺日补零，decimal SUM 字符串 Number() 收口；前端首页重写为看板——页面守卫仍豁免（"登录成功即 403"死角决策不动），门控下沉数据层：无 Home 渲染降级卡且 query enabled=false 零请求，有码才拉聚合；四统计卡 + 营收卡 + 状态分布 + 手写 CSS 柱状图（7 根柱不引图表库，柱高按 max 换算固定像素避开 flex 列百分比陷阱）
+- [x] 浏览器矩阵：空库基线（counts 5/5/3、7 天零柱、营收 0）；跨日 fixtures 6 单实证聚合——日界归属（昨夜 23:30 → 28 日、今晨 00:30 → 29 日）、营收口径（total 含窗口外 ¥1000、today 只算今日 paid、cancelled/unpaid 计单不计钱）、柱高比例（2 单满高/1 单半高/0 单兜底 2px）；curl 权限矩阵 200/403/200；test1 撤 Home 浏览器实证——菜单"首页"消失、降级卡呈现、**0 次 /stats 请求**（enabled 双闸决定性证据），恢复后 1 次请求 + 看板回归；清理回零订单基线（权限表 5 条原状）
+
 ### 5 收尾 ⏳ 未开始（websee / crawler，可砍）
 
 ## 时间线（session 日志；耗时为粗估）
@@ -103,6 +106,7 @@
 | 2026-08-28 | 1.5h  | 商品域：列表页四码门控 + 图片上传控件 + excel 导入三分支 + 热销只读页；契约三缺口后端补齐（VO×2 / images 显式 String / mutator FormData 分流）      | 商品页上线（feat commit）    |
 | 2026-08-28 | 1h    | 订单页：三码门控 + 状态机按钮条件渲染 + 快照对比抽屉 + 竞态 400 实证；desc 契约缺口同坑复现即修；决定性证据升级到接口层同构验证                     | 订单页上线（feat commit）    |
 | 2026-08-28 | 1h    | 活动页：两码门控 + 时间窗推导呈现 + RangePicker 拆合 ISO + 悬空按钮码/接口码正交性双实证；零契约缺口切片；rc-picker 自动化交互踩坑改走数据层        | 活动页上线（feat commit）    |
+| 2026-08-29 | 1h    | 首页看板：后端 stats 聚合模块（Home 码复用、JS 日界分桶、嵌套 VO）+ 前端看板重写（数据层双闸门控、手写 CSS 柱状图）；跨日 fixtures 实证聚合口径     | 阶段 4 收官（feat commit）   |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -169,3 +173,8 @@
 | 2026-08-28 | 时间窗单 RangePicker 字段，提交拆两 ISO 字段、回显组 dayjs 对                    | DTO 是 startTime/endTime 两字段但语义是一个区间；一个控件天然带"成对必填"约束，拆合只在协议边界发生  |
 | 2026-08-28 | 活动状态列只读呈现 + 编辑成功 toast 带后端重推结果                               | status 是时间窗推导的落库快照非用户操作；把"推导"暴露给用户避免"我没改状态它怎么变了"的困惑          |
 | 2026-08-28 | 前端不复刻 end>start 校验                                                        | 双层校验测试口：后端 400 detail 是字符串（非字段数组），实证 errorText → toast 分支；UI 层拦截留后续 |
+| 2026-08-29 | 统计接口挂 Home 码复用，不新造 Dashboard 权限点                                  | 看板与首页同门槛语义；权限点与 @RequirePermission 同源只读，新造码要动种子数据违背复刻口径           |
+| 2026-08-29 | 首页门控下沉数据层：无码渲染降级卡 + query enabled=false                         | 页面守卫豁免决策不动（避免登录即 403 死角），但无 Home 的账号不该发注定 403 的请求；双闸有浏览器实证 |
+| 2026-08-29 | 趋势聚合"SQL 取行 + JS 分桶"，不用 SQL GROUP BY DATE()                           | 容器 mysqld 是 UTC，SQL 侧分日会用错日界；JS 本地算边界与 deriveStatus/对账 cron 同一时钟源          |
+| 2026-08-29 | 营收口径：total 全量 paid、today/trend 只窗口内，cancelled/unpaid 计单不计钱     | 单数反映经营活跃度、钱只认已付款；口径差异用 fixtures（窗口外 ¥1000 大单）实证 total ≠ trend 合计    |
+| 2026-08-29 | 7 根柱手写 CSS 柱状图，不引图表库；柱高换算固定像素上限                          | SIMPLE：单接口一屏可视不值一个 chart 依赖；flex 列内百分比高度受兄弟元素挤压，固定像素换算零陷阱     |

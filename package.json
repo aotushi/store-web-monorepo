@@ -1,19 +1,20 @@
 {
   "name": "store-web-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.26.2",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
-    "check": "prettier --check \"**/*.{less,css,json,md,yml,yaml,html}\"",
-    "format": "prettier --write \"**/*.{less,css,json,md,yml,yaml,html}\"",
+    "check": "vp check && prettier --check \"**/*.{less,css,json,md,yml,yaml,html}\"",
+    "format": "vp check --fix && prettier --write \"**/*.{less,css,json,md,yml,yaml,html}\"",
     "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.6"
-  }
+    "prettier": "^3.9.6",
+    "vite-plus": "^0.3.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.26.2"
 }

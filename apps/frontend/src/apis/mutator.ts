@@ -1,5 +1,5 @@
-import ky, { HTTPError } from 'ky';
-import { getToken, setToken } from '@/stores/auth';
+import ky, { HTTPError } from "ky";
+import { getToken, setToken } from "@/stores/auth";
 
 // 后端统一响应壳（ResponseInterceptor / AllExceptionsFilter 两态对称）
 interface ResponseShell<T> {
@@ -18,7 +18,7 @@ export class ApiError extends Error {
     public readonly detail?: unknown,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -29,19 +29,19 @@ const client = ky.create({
     beforeRequest: [
       (request) => {
         const token = getToken();
-        if (token) request.headers.set('authorization', `Bearer ${token}`);
+        if (token) request.headers.set("authorization", `Bearer ${token}`);
       },
     ],
     afterResponse: [
       (request, _options, response) => {
         // 滑动续期：后端 Guard 对临期 token 重签、新 token 放响应头，这里静默替换本地
-        const fresh = response.headers.get('token');
+        const fresh = response.headers.get("token");
         if (fresh) setToken(fresh);
         // 401 唯一语义 = 登录态失效 → 清 token 回登录页（无 refresh 接口、无重放队列）；
         // 登录接口自身的 401 是"密码错"业务失败，交表单展示，不在此拦
-        if (response.status === 401 && !new URL(request.url).pathname.endsWith('/auth/login')) {
+        if (response.status === 401 && !new URL(request.url).pathname.endsWith("/auth/login")) {
           setToken(null);
-          window.location.assign('/login');
+          window.location.assign("/login");
         }
       },
     ],
@@ -50,7 +50,7 @@ const client = ky.create({
 
 interface FetcherConfig {
   url: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   params?: Record<string, unknown>;
   data?: unknown;
   headers?: Record<string, string>;
@@ -64,19 +64,23 @@ export async function customFetcher<T>(config: FetcherConfig): Promise<T> {
 
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params ?? {})) {
-    if (value !== undefined && value !== null) searchParams.set(key, String(value));
+    if (value === undefined || value === null) continue;
+    // query 值按契约只有 primitive；其余形态兜底走 JSON，避免序列化成 "[object Object]"
+    const isPrimitive =
+      typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+    searchParams.set(key, isPrimitive ? String(value) : JSON.stringify(value));
   }
 
   // multipart：FormData 必须走 body 且不能手动设 Content-Type（boundary 由浏览器生成），
   // 而 orval 对 multipart 接口会硬编码一个无 boundary 的 'Content-Type' 头，这里丢弃它
   const isForm = data instanceof FormData;
-  const { 'Content-Type': _dropped, ...restHeaders } = headers ?? {};
+  const { "Content-Type": _dropped, ...restHeaders } = headers ?? {};
 
   let shell: ResponseShell<T>;
   try {
-    shell = await client(url.replace(/^\//, ''), {
+    shell = await client(url.replace(/^\//, ""), {
       method,
-      prefixUrl: '/',
+      prefixUrl: "/",
       searchParams,
       ...(isForm
         ? { body: data, headers: restHeaders }
@@ -88,7 +92,7 @@ export async function customFetcher<T>(config: FetcherConfig): Promise<T> {
     if (err instanceof HTTPError) {
       const body = (await err.response.json().catch(() => null)) as ResponseShell<unknown> | null;
       const raw = body?.message ?? err.message;
-      const text = Array.isArray(raw) ? '请求参数有误' : String(raw);
+      const text = Array.isArray(raw) ? "请求参数有误" : String(raw);
       throw new ApiError(body?.code ?? err.response.status, text, body?.message);
     }
     throw err;

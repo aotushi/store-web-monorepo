@@ -5,6 +5,7 @@ build/
 coverage/
 pnpm-lock.yaml
 sql/
-# 生成物不 lint 不手改（契约链路产物，PLAN §5.3）
+# 生成物不 lint 不手改（契约链路产物，PLAN §5.3）；vp/oxfmt 同读本文件（fmt 的 ignore-path 默认值）
 apps/backend/openapi.json
 apps/frontend/src/apis/generated/
+apps/frontend/src/routeTree.gen.ts

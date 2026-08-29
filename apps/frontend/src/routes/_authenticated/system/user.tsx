@@ -1,23 +1,23 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import type { ProColumns, ProFormInstance } from '@ant-design/pro-components';
-import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { App, Button, Form, Input, Modal, Popconfirm, Select, Tag } from 'antd';
-import { useEffect, useRef, useState } from 'react';
-import { applyFieldErrors, errorText } from '@/apis/error';
-import { useAuthControllerRegister } from '@/apis/generated/auth/auth';
-import { useRoleControllerList } from '@/apis/generated/role/role';
-import type { EditUserDto, RegisterDto, User } from '@/apis/generated/storeWebAPI.schemas';
+import { PlusOutlined } from "@ant-design/icons";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns, ProFormInstance } from "@ant-design/pro-components";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { App, Button, Form, Input, Modal, Popconfirm, Select, Tag } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { applyFieldErrors, errorText } from "@/apis/error";
+import { useAuthControllerRegister } from "@/apis/generated/auth/auth";
+import { useRoleControllerList } from "@/apis/generated/role/role";
+import type { EditUserDto, RegisterDto, User } from "@/apis/generated/storeWebAPI.schemas";
 import {
   getUserControllerListQueryKey,
   useUserControllerEdit,
   useUserControllerFreezed,
   useUserControllerList,
   useUserControllerRemove,
-} from '@/apis/generated/user/user';
-import { requireCode } from '@/permission/can';
-import { Permission, usePermission } from '@/permission/Permission';
+} from "@/apis/generated/user/user";
+import { requireCode } from "@/permission/can";
+import { Permission, usePermission } from "@/permission/Permission";
 
 // CRUD 样板页（PLAN §5.6）：列表状态（页码/条数/搜索词）进 URL——刷新/回退/分享链接
 // 都能还原视图；默认值不写进 URL 保持整洁。数据流单向：URL search → useQuery → ProTable 受控渲染
@@ -29,19 +29,19 @@ interface UserListSearch {
   username?: string;
 }
 
-export const Route = createFileRoute('/_authenticated/system/user')({
+export const Route = createFileRoute("/_authenticated/system/user")({
   validateSearch: (search: Record<string, unknown>): UserListSearch => ({
-    page: typeof search.page === 'number' && search.page > 1 ? Math.floor(search.page) : undefined,
+    page: typeof search.page === "number" && search.page > 1 ? Math.floor(search.page) : undefined,
     pageSize:
-      typeof search.pageSize === 'number' &&
+      typeof search.pageSize === "number" &&
       search.pageSize > 0 &&
       search.pageSize !== DEFAULT_PAGE_SIZE
         ? Math.floor(search.pageSize)
         : undefined,
     username:
-      typeof search.username === 'string' && search.username !== '' ? search.username : undefined,
+      typeof search.username === "string" && search.username !== "" ? search.username : undefined,
   }),
-  beforeLoad: ({ context }) => requireCode(context.me, 'UserManage'),
+  beforeLoad: ({ context }) => requireCode(context.me, "UserManage"),
   component: UserManagePage,
 });
 
@@ -77,7 +77,7 @@ function UserManagePage() {
   const freezeMutation = useUserControllerFreezed({
     mutation: {
       onSuccess: (updated) => {
-        void message.success(updated.freezed ? '已冻结' : '已解冻');
+        void message.success(updated.freezed ? "已冻结" : "已解冻");
         void invalidateList();
       },
       onError: (err) => void message.error(errorText(err)),
@@ -87,7 +87,7 @@ function UserManagePage() {
   const removeMutation = useUserControllerRemove({
     mutation: {
       onSuccess: () => {
-        void message.success('已删除');
+        void message.success("已删除");
         // 删掉本页最后一条时回退一页，避免停在空页
         if (page > 1 && listQuery.data?.list.length === 1) {
           void navigate({
@@ -101,40 +101,40 @@ function UserManagePage() {
   });
 
   const columns: ProColumns<User>[] = [
-    { title: 'ID', dataIndex: 'id', width: 64, search: false },
-    { title: '用户名', dataIndex: 'username', fieldProps: { placeholder: '用户名模糊搜索' } },
+    { title: "ID", dataIndex: "id", width: 64, search: false },
+    { title: "用户名", dataIndex: "username", fieldProps: { placeholder: "用户名模糊搜索" } },
     {
-      title: '类型',
-      dataIndex: 'userType',
+      title: "类型",
+      dataIndex: "userType",
       width: 96,
       search: false,
-      valueEnum: { 0: { text: '管理员' }, 1: { text: '普通用户' } },
+      valueEnum: { 0: { text: "管理员" }, 1: { text: "普通用户" } },
     },
-    { title: '邮箱', dataIndex: 'email', search: false, render: (_, r) => r.email || '-' },
+    { title: "邮箱", dataIndex: "email", search: false, render: (_, r) => r.email || "-" },
     {
-      title: '角色',
-      dataIndex: 'roles',
+      title: "角色",
+      dataIndex: "roles",
       search: false,
       render: (_, r) =>
-        r.roles?.length ? r.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : '-',
+        r.roles?.length ? r.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : "-",
     },
     {
-      title: '状态',
-      dataIndex: 'freezed',
+      title: "状态",
+      dataIndex: "freezed",
       width: 88,
       search: false,
-      valueEnum: { 0: { text: '正常', status: 'Success' }, 1: { text: '已冻结', status: 'Error' } },
+      valueEnum: { 0: { text: "正常", status: "Success" }, 1: { text: "已冻结", status: "Error" } },
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      valueType: 'dateTime',
+      title: "创建时间",
+      dataIndex: "createTime",
+      valueType: "dateTime",
       width: 170,
       search: false,
     },
     {
-      title: '操作',
-      valueType: 'option',
+      title: "操作",
+      valueType: "option",
       width: 168,
       render: (_, record) => {
         // 后端禁自冻/自删（400 兜底），前端同步禁用是体验层
@@ -153,7 +153,7 @@ function UserManagePage() {
                 freezeMutation.mutate({ data: { id: record.id, freezed: record.freezed ? 0 : 1 } })
               }
             >
-              {record.freezed ? '解冻' : '冻结'}
+              {record.freezed ? "解冻" : "冻结"}
             </Button>
           </Permission>,
           <Permission key="remove" code="delete:user">
@@ -180,7 +180,7 @@ function UserManagePage() {
         columns={columns}
         dataSource={listQuery.data?.list}
         loading={listQuery.isFetching}
-        search={{ labelWidth: 'auto' }}
+        search={{ labelWidth: "auto" }}
         formRef={formRef}
         form={{ initialValues: { username: search.username } }}
         // 搜索回第 1 页（省略 page）；pageSize 是布局偏好，搜索/重置都保留
@@ -231,7 +231,7 @@ function UserManagePage() {
       />
       <EditUserModal
         user={editing}
-        canPickRoles={has('RoleManage')}
+        canPickRoles={has("RoleManage")}
         onClose={() => setEditing(undefined)}
         onSaved={() => {
           setEditing(undefined);
@@ -279,7 +279,7 @@ function CreateUserModal(props: { open: boolean; onClose: () => void; onSaved: (
         <Form.Item
           name="username"
           label="用户名"
-          rules={[{ required: true, message: '请输入用户名' }]}
+          rules={[{ required: true, message: "请输入用户名" }]}
         >
           <Input placeholder="登录用户名" />
         </Form.Item>
@@ -287,13 +287,13 @@ function CreateUserModal(props: { open: boolean; onClose: () => void; onSaved: (
           name="password"
           label="密码"
           rules={[
-            { required: true, message: '请输入密码' },
-            { min: 6, max: 72, message: '密码长度 6-72 位' },
+            { required: true, message: "请输入密码" },
+            { min: 6, max: 72, message: "密码长度 6-72 位" },
           ]}
         >
           <Input.Password placeholder="6-72 位" />
         </Form.Item>
-        <Form.Item name="email" label="邮箱" rules={[{ type: 'email', message: '邮箱格式不正确' }]}>
+        <Form.Item name="email" label="邮箱" rules={[{ type: "email", message: "邮箱格式不正确" }]}>
           <Input placeholder="选填" />
         </Form.Item>
       </Form>
@@ -307,7 +307,7 @@ function EditUserModal(props: {
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form] = Form.useForm<Omit<EditUserDto, 'id'>>();
+  const [form] = Form.useForm<Omit<EditUserDto, "id">>();
   const { message } = App.useApp();
 
   // 角色下拉依赖 role/list（后端挂 RoleManage 码）：无码不发请求、隐藏字段；
@@ -329,7 +329,7 @@ function EditUserModal(props: {
   const editMutation = useUserControllerEdit({
     mutation: {
       onSuccess: () => {
-        void message.success('已保存');
+        void message.success("已保存");
         props.onSaved();
       },
       onError: (err) => {
@@ -340,7 +340,7 @@ function EditUserModal(props: {
 
   return (
     <Modal
-      title={props.user ? `编辑用户「${props.user.username}」` : '编辑用户'}
+      title={props.user ? `编辑用户「${props.user.username}」` : "编辑用户"}
       open={!!props.user}
       onCancel={props.onClose}
       confirmLoading={editMutation.isPending}
@@ -356,10 +356,10 @@ function EditUserModal(props: {
       }}
     >
       <Form form={form} layout="vertical">
-        <Form.Item name="email" label="邮箱" rules={[{ type: 'email', message: '邮箱格式不正确' }]}>
+        <Form.Item name="email" label="邮箱" rules={[{ type: "email", message: "邮箱格式不正确" }]}>
           <Input placeholder="选填" />
         </Form.Item>
-        <Form.Item name="desc" label="备注" rules={[{ max: 255, message: '备注不能超过 255 字' }]}>
+        <Form.Item name="desc" label="备注" rules={[{ max: 255, message: "备注不能超过 255 字" }]}>
           <Input.TextArea rows={2} placeholder="选填" />
         </Form.Item>
         {props.canPickRoles && (

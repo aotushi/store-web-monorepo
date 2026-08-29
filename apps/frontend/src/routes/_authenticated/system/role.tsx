@@ -1,28 +1,28 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import type { ProColumns } from '@ant-design/pro-components';
-import { useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { App, Button, Form, Input, Modal, Popconfirm, Spin, Tag, Tree } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
-import { applyFieldErrors, errorText } from '@/apis/error';
-import { usePermissionControllerList } from '@/apis/generated/permission/permission';
+import { PlusOutlined } from "@ant-design/icons";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns } from "@ant-design/pro-components";
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { App, Button, Form, Input, Modal, Popconfirm, Spin, Tag, Tree } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { applyFieldErrors, errorText } from "@/apis/error";
+import { usePermissionControllerList } from "@/apis/generated/permission/permission";
 import {
   getRoleControllerListQueryKey,
   useRoleControllerCreate,
   useRoleControllerEdit,
   useRoleControllerList,
   useRoleControllerRemove,
-} from '@/apis/generated/role/role';
-import type { CreateRoleDto, EditRoleDto, Role } from '@/apis/generated/storeWebAPI.schemas';
-import { requireCode } from '@/permission/can';
-import { Permission, usePermission } from '@/permission/Permission';
-import { buildPermissionTree } from '@/permission/tree';
+} from "@/apis/generated/role/role";
+import type { CreateRoleDto, EditRoleDto, Role } from "@/apis/generated/storeWebAPI.schemas";
+import { requireCode } from "@/permission/can";
+import { Permission, usePermission } from "@/permission/Permission";
+import { buildPermissionTree } from "@/permission/tree";
 
 // 复用用户页 CRUD 样板，但 role/list 无分页无筛选——接口没有的能力不硬造 URL 状态。
 // 本页新增交互：权限点勾选树（checkStrictly 精确授权，见 PermissionTreeField）
-export const Route = createFileRoute('/_authenticated/system/role')({
-  beforeLoad: ({ context }) => requireCode(context.me, 'RoleManage'),
+export const Route = createFileRoute("/_authenticated/system/role")({
+  beforeLoad: ({ context }) => requireCode(context.me, "RoleManage"),
   component: RoleManagePage,
 });
 
@@ -32,7 +32,7 @@ function RoleManagePage() {
   const { has } = usePermission();
   // 权限树数据源 permission/list 后端挂 PermissionManage 码：无码不渲染字段、不发请求；
   // 提交不带 permissionIds 即"权限点保持不变"（EditRoleDto 语义：传入才整体替换）
-  const canPickPermissions = has('PermissionManage');
+  const canPickPermissions = has("PermissionManage");
 
   const listQuery = useRoleControllerList();
   const invalidateList = () =>
@@ -44,7 +44,7 @@ function RoleManagePage() {
   const removeMutation = useRoleControllerRemove({
     mutation: {
       onSuccess: () => {
-        void message.success('已删除');
+        void message.success("已删除");
         void invalidateList();
       },
       onError: (err) => void message.error(errorText(err)),
@@ -52,25 +52,25 @@ function RoleManagePage() {
   });
 
   const columns: ProColumns<Role>[] = [
-    { title: 'ID', dataIndex: 'id', width: 64 },
-    { title: '名称', dataIndex: 'name', width: 140 },
-    { title: '描述', dataIndex: 'desc', ellipsis: true },
+    { title: "ID", dataIndex: "id", width: 64 },
+    { title: "名称", dataIndex: "name", width: 140 },
+    { title: "描述", dataIndex: "desc", ellipsis: true },
     {
-      title: '权限点',
-      dataIndex: 'permissions',
+      title: "权限点",
+      dataIndex: "permissions",
       width: 88,
       render: (_, r) => `${r.permissions?.length ?? 0} 个`,
     },
     {
-      title: '内置',
-      dataIndex: 'isSystem',
+      title: "内置",
+      dataIndex: "isSystem",
       width: 80,
-      render: (_, r) => (r.isSystem === 1 ? <Tag color="blue">内置</Tag> : '-'),
+      render: (_, r) => (r.isSystem === 1 ? <Tag color="blue">内置</Tag> : "-"),
     },
-    { title: '创建时间', dataIndex: 'createTime', valueType: 'dateTime', width: 170 },
+    { title: "创建时间", dataIndex: "createTime", valueType: "dateTime", width: 170 },
     {
-      title: '操作',
-      valueType: 'option',
+      title: "操作",
+      valueType: "option",
       width: 120,
       render: (_, record) => {
         // 内置角色后端禁删（400 兜底），允许编辑（含权限点调整）
@@ -156,7 +156,7 @@ function PermissionTreeField(props: { value?: number[]; onChange?: (v: number[])
   // 数据就绪后才挂 Tree：defaultExpandAll 只在首次挂载时生效，异步数据到达后不会补展开
   if (!permsQuery.data) return <Spin size="small" />;
   return (
-    <div style={{ maxHeight: 320, overflow: 'auto' }}>
+    <div style={{ maxHeight: 320, overflow: "auto" }}>
       <Tree
         checkable
         checkStrictly
@@ -210,8 +210,8 @@ function CreateRoleModal(props: {
           name="name"
           label="名称"
           rules={[
-            { required: true, message: '请输入角色名称' },
-            { max: 50, message: '名称不能超过 50 字' },
+            { required: true, message: "请输入角色名称" },
+            { max: 50, message: "名称不能超过 50 字" },
           ]}
         >
           <Input placeholder="角色名称" />
@@ -220,8 +220,8 @@ function CreateRoleModal(props: {
           name="desc"
           label="描述"
           rules={[
-            { required: true, message: '请输入角色描述' },
-            { max: 255, message: '描述不能超过 255 字' },
+            { required: true, message: "请输入角色描述" },
+            { max: 255, message: "描述不能超过 255 字" },
           ]}
         >
           <Input.TextArea rows={2} placeholder="角色职责说明" />
@@ -242,7 +242,7 @@ function EditRoleModal(props: {
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form] = Form.useForm<Omit<EditRoleDto, 'id'>>();
+  const [form] = Form.useForm<Omit<EditRoleDto, "id">>();
   const { message } = App.useApp();
 
   useEffect(() => {
@@ -261,7 +261,7 @@ function EditRoleModal(props: {
   const editMutation = useRoleControllerEdit({
     mutation: {
       onSuccess: () => {
-        void message.success('已保存');
+        void message.success("已保存");
         props.onSaved();
       },
       onError: (err) => {
@@ -272,7 +272,7 @@ function EditRoleModal(props: {
 
   return (
     <Modal
-      title={props.role ? `编辑角色「${props.role.name}」` : '编辑角色'}
+      title={props.role ? `编辑角色「${props.role.name}」` : "编辑角色"}
       open={!!props.role}
       onCancel={props.onClose}
       confirmLoading={editMutation.isPending}
@@ -289,8 +289,8 @@ function EditRoleModal(props: {
           name="name"
           label="名称"
           rules={[
-            { required: true, message: '请输入角色名称' },
-            { max: 50, message: '名称不能超过 50 字' },
+            { required: true, message: "请输入角色名称" },
+            { max: 50, message: "名称不能超过 50 字" },
           ]}
         >
           <Input placeholder="角色名称" />
@@ -299,8 +299,8 @@ function EditRoleModal(props: {
           name="desc"
           label="描述"
           rules={[
-            { required: true, message: '请输入角色描述' },
-            { max: 255, message: '描述不能超过 255 字' },
+            { required: true, message: "请输入角色描述" },
+            { max: 255, message: "描述不能超过 255 字" },
           ]}
         >
           <Input.TextArea rows={2} placeholder="角色职责说明" />

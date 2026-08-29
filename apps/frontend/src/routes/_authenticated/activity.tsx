@@ -1,24 +1,24 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import type { ProColumns, ProFormInstance } from '@ant-design/pro-components';
-import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { App, Button, DatePicker, Form, Input, Modal, Popconfirm, Select, Tag } from 'antd';
-import dayjs from 'dayjs';
-import type { Dayjs } from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
-import { applyFieldErrors, errorText } from '@/apis/error';
+import { PlusOutlined } from "@ant-design/icons";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns, ProFormInstance } from "@ant-design/pro-components";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { App, Button, DatePicker, Form, Input, Modal, Popconfirm, Select, Tag } from "antd";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import { useEffect, useRef, useState } from "react";
+import { applyFieldErrors, errorText } from "@/apis/error";
 import {
   getActivityControllerListQueryKey,
   useActivityControllerCreate,
   useActivityControllerEdit,
   useActivityControllerList,
   useActivityControllerRemove,
-} from '@/apis/generated/activity/activity';
-import { useProductControllerList } from '@/apis/generated/product/product';
-import type { Activity, Product } from '@/apis/generated/storeWebAPI.schemas';
-import { requireCode } from '@/permission/can';
-import { Permission } from '@/permission/Permission';
+} from "@/apis/generated/activity/activity";
+import { useProductControllerList } from "@/apis/generated/product/product";
+import type { Activity, Product } from "@/apis/generated/storeWebAPI.schemas";
+import { requireCode } from "@/permission/can";
+import { Permission } from "@/permission/Permission";
 
 // 复用 CRUD 样板（order 页），本页新点：两码形态——ActivityManage 兼页面 + 创建 + 列表 + 编辑，
 // 仅删除另设 delete:activity（门控分布抄后端 @RequirePermission）；状态不是用户操作而是
@@ -27,12 +27,12 @@ import { Permission } from '@/permission/Permission';
 const DEFAULT_PAGE_SIZE = 10;
 
 const STATUS_ENUM = {
-  0: { text: '未开始', status: 'Warning' },
-  1: { text: '进行中', status: 'Processing' },
-  2: { text: '已结束', status: 'Default' },
+  0: { text: "未开始", status: "Warning" },
+  1: { text: "进行中", status: "Processing" },
+  2: { text: "已结束", status: "Default" },
 } as const;
 
-const TYPE_TEXT: Record<number, string> = { 0: '普通活动', 1: '拼团活动' };
+const TYPE_TEXT: Record<number, string> = { 0: "普通活动", 1: "拼团活动" };
 
 interface ActivityListSearch {
   page?: number;
@@ -43,23 +43,23 @@ interface ActivityListSearch {
 
 // 状态枚举含 0：与 undefined 显式区分，URL 层 number、表单 valueEnum 层 string 都在这收口（同 product/order 页）
 function parseStatus(v: unknown): 0 | 1 | 2 | undefined {
-  const n = typeof v === 'string' && v !== '' ? Number(v) : v;
+  const n = typeof v === "string" && v !== "" ? Number(v) : v;
   return n === 0 || n === 1 || n === 2 ? n : undefined;
 }
 
-export const Route = createFileRoute('/_authenticated/activity')({
+export const Route = createFileRoute("/_authenticated/activity")({
   validateSearch: (search: Record<string, unknown>): ActivityListSearch => ({
-    page: typeof search.page === 'number' && search.page > 1 ? Math.floor(search.page) : undefined,
+    page: typeof search.page === "number" && search.page > 1 ? Math.floor(search.page) : undefined,
     pageSize:
-      typeof search.pageSize === 'number' &&
+      typeof search.pageSize === "number" &&
       search.pageSize > 0 &&
       search.pageSize !== DEFAULT_PAGE_SIZE
         ? Math.floor(search.pageSize)
         : undefined,
-    name: typeof search.name === 'string' && search.name !== '' ? search.name : undefined,
+    name: typeof search.name === "string" && search.name !== "" ? search.name : undefined,
     status: parseStatus(search.status),
   }),
-  beforeLoad: ({ context }) => requireCode(context.me, 'ActivityManage'),
+  beforeLoad: ({ context }) => requireCode(context.me, "ActivityManage"),
   component: ActivityListPage,
 });
 
@@ -101,7 +101,7 @@ function ActivityListPage() {
   const removeMutation = useActivityControllerRemove({
     mutation: {
       onSuccess: () => {
-        void message.success('已删除');
+        void message.success("已删除");
         if (page > 1 && listQuery.data?.list.length === 1) {
           void navigate({
             search: (prev) => ({ ...prev, page: page - 1 > 1 ? page - 1 : undefined }),
@@ -114,37 +114,37 @@ function ActivityListPage() {
   });
 
   const columns: ProColumns<Activity>[] = [
-    { title: 'ID', dataIndex: 'id', width: 64, search: false },
-    { title: '名称', dataIndex: 'name', fieldProps: { placeholder: '活动名称模糊搜索' } },
+    { title: "ID", dataIndex: "id", width: 64, search: false },
+    { title: "名称", dataIndex: "name", fieldProps: { placeholder: "活动名称模糊搜索" } },
     {
-      title: '类型',
-      dataIndex: 'type',
+      title: "类型",
+      dataIndex: "type",
       width: 96,
       search: false,
       render: (_, r) => (
-        <Tag color={r.type === 1 ? 'blue' : 'default'}>{TYPE_TEXT[r.type] ?? r.type}</Tag>
+        <Tag color={r.type === 1 ? "blue" : "default"}>{TYPE_TEXT[r.type] ?? r.type}</Tag>
       ),
     },
-    { title: '状态', dataIndex: 'status', width: 90, valueEnum: STATUS_ENUM },
+    { title: "状态", dataIndex: "status", width: 90, valueEnum: STATUS_ENUM },
     {
-      title: '关联商品',
-      dataIndex: 'productId',
+      title: "关联商品",
+      dataIndex: "productId",
       width: 120,
       search: false,
       ellipsis: true,
       render: (_, r) => productName(r.productId),
     },
     {
-      title: '开始时间',
-      dataIndex: 'startTime',
-      valueType: 'dateTime',
+      title: "开始时间",
+      dataIndex: "startTime",
+      valueType: "dateTime",
       width: 160,
       search: false,
     },
-    { title: '结束时间', dataIndex: 'endTime', valueType: 'dateTime', width: 160, search: false },
+    { title: "结束时间", dataIndex: "endTime", valueType: "dateTime", width: 160, search: false },
     {
-      title: '操作',
-      valueType: 'option',
+      title: "操作",
+      valueType: "option",
       width: 120,
       render: (_, record) => [
         // 编辑接口码即页面码 ActivityManage，进得来页就点得动，无需再门控
@@ -178,7 +178,7 @@ function ActivityListPage() {
         columns={columns}
         dataSource={listQuery.data?.list}
         loading={listQuery.isFetching}
-        search={{ labelWidth: 'auto' }}
+        search={{ labelWidth: "auto" }}
         formRef={formRef}
         form={{
           initialValues: {
@@ -332,7 +332,7 @@ function EditActivityModal(props: {
     mutation: {
       onSuccess: (activity) => {
         // 时间窗变更会在后端重推状态，反馈里带上推导结果
-        void message.success(`已保存（${STATUS_ENUM[activity.status as 0 | 1 | 2]?.text ?? ''}）`);
+        void message.success(`已保存（${STATUS_ENUM[activity.status as 0 | 1 | 2]?.text ?? ""}）`);
         props.onSaved();
       },
       onError: (err) => {
@@ -343,7 +343,7 @@ function EditActivityModal(props: {
 
   return (
     <Modal
-      title={props.activity ? `编辑活动「${props.activity.name}」` : '编辑活动'}
+      title={props.activity ? `编辑活动「${props.activity.name}」` : "编辑活动"}
       open={!!props.activity}
       onCancel={props.onClose}
       confirmLoading={editMutation.isPending}
@@ -380,17 +380,17 @@ function ActivityFormItems(props: { products: Product[] }) {
         name="name"
         label="名称"
         rules={[
-          { required: true, message: '请输入活动名称' },
-          { max: 30, message: '名称不能超过 30 字' },
+          { required: true, message: "请输入活动名称" },
+          { max: 30, message: "名称不能超过 30 字" },
         ]}
       >
         <Input placeholder="活动名称" />
       </Form.Item>
-      <Form.Item name="type" label="类型" rules={[{ required: true, message: '请选择活动类型' }]}>
+      <Form.Item name="type" label="类型" rules={[{ required: true, message: "请选择活动类型" }]}>
         <Select
           options={[
-            { label: '普通活动', value: 0 },
-            { label: '拼团活动', value: 1 },
+            { label: "普通活动", value: 0 },
+            { label: "拼团活动", value: 1 },
           ]}
         />
       </Form.Item>
@@ -401,14 +401,14 @@ function ActivityFormItems(props: { products: Product[] }) {
       <Form.Item
         name="range"
         label="活动时间窗"
-        rules={[{ required: true, message: '请选择活动时间' }]}
+        rules={[{ required: true, message: "请选择活动时间" }]}
       >
-        <DatePicker.RangePicker showTime style={{ width: '100%' }} />
+        <DatePicker.RangePicker showTime style={{ width: "100%" }} />
       </Form.Item>
       <Form.Item
         name="productId"
         label="参与商品"
-        rules={[{ required: true, message: '请选择商品' }]}
+        rules={[{ required: true, message: "请选择商品" }]}
       >
         <Select
           showSearch

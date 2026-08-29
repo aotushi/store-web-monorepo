@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
-import { ProductService } from '../product/product.service';
-import type { ActivityQueryDto } from './dto/activity-query.dto';
-import type { CreateActivityDto } from './dto/create-activity.dto';
-import type { EditActivityDto } from './dto/edit-activity.dto';
-import { Activity } from './entities/activity.entity';
-import type { ActivityListVo } from './vo/activity-list.vo';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Like, Repository } from "typeorm";
+import { ProductService } from "../product/product.service";
+import type { ActivityQueryDto } from "./dto/activity-query.dto";
+import type { CreateActivityDto } from "./dto/create-activity.dto";
+import type { EditActivityDto } from "./dto/edit-activity.dto";
+import { Activity } from "./entities/activity.entity";
+import type { ActivityListVo } from "./vo/activity-list.vo";
 
 // 按时间窗推导活动状态：0 未开始 1 进行中 2 已结束
 function deriveStatus(start: Date, end: Date, now = new Date()): number {
@@ -23,7 +23,7 @@ export class ActivityService {
   ) {}
 
   private validateWindow(start: Date, end: Date): void {
-    if (end <= start) throw new BadRequestException('结束时间必须晚于开始时间');
+    if (end <= start) throw new BadRequestException("结束时间必须晚于开始时间");
   }
 
   // 创建：校验时间窗与商品存在性，初始状态按当前时间推导（避免"进行期活动显示未开始"）
@@ -36,7 +36,7 @@ export class ActivityService {
     const activity = this.activityRepo.create({
       name: dto.name,
       type: dto.type,
-      desc: dto.desc ?? '',
+      desc: dto.desc ?? "",
       startTime: start,
       endTime: end,
       productId: dto.productId,
@@ -51,7 +51,7 @@ export class ActivityService {
         ...(query.name ? { name: Like(`%${query.name}%`) } : {}),
         ...(query.status !== undefined ? { status: query.status } : {}),
       },
-      order: { createTime: 'DESC' },
+      order: { createTime: "DESC" },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     });
@@ -61,7 +61,7 @@ export class ActivityService {
   // 编辑：时间窗变更时整体校验并重推状态
   async update(dto: EditActivityDto): Promise<Activity> {
     const activity = await this.activityRepo.findOne({ where: { id: dto.id } });
-    if (!activity) throw new NotFoundException('活动不存在');
+    if (!activity) throw new NotFoundException("活动不存在");
 
     if (dto.name !== undefined) activity.name = dto.name;
     if (dto.type !== undefined) activity.type = dto.type;
@@ -83,7 +83,7 @@ export class ActivityService {
 
   async remove(id: number): Promise<void> {
     const activity = await this.activityRepo.findOne({ where: { id } });
-    if (!activity) throw new NotFoundException('活动不存在');
+    if (!activity) throw new NotFoundException("活动不存在");
     await this.activityRepo.delete(id);
   }
 

@@ -1,20 +1,20 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { createFileRoute } from '@tanstack/react-router';
-import { Alert, Card, Col, Row, Spin, Statistic } from 'antd';
-import { useStatsControllerOverview } from '@/apis/generated/stats/stats';
-import type { StatsTrendPointVo } from '@/apis/generated/storeWebAPI.schemas';
-import { errorText } from '@/apis/error';
-import { usePermission } from '@/permission/Permission';
+import { PageContainer } from "@ant-design/pro-components";
+import { createFileRoute } from "@tanstack/react-router";
+import { Alert, Card, Col, Row, Spin, Statistic } from "antd";
+import { useStatsControllerOverview } from "@/apis/generated/stats/stats";
+import type { StatsTrendPointVo } from "@/apis/generated/storeWebAPI.schemas";
+import { errorText } from "@/apis/error";
+import { usePermission } from "@/permission/Permission";
 
 // 首页看板：数据接口挂 Home 码，页面守卫仍豁免（避免"登录成功即 403"死角）——
 // 于是门控落在数据层：无 Home 码渲染欢迎卡且不发请求（enabled 双闸），有码才拉聚合统计。
 // 趋势图手写 CSS 柱状（SIMPLE：单接口一屏可视，不为 7 根柱子引图表库）
-export const Route = createFileRoute('/_authenticated/')({ component: HomePage });
+export const Route = createFileRoute("/_authenticated/")({ component: HomePage });
 
 function HomePage() {
   const { me } = Route.useRouteContext();
   const { has } = usePermission();
-  const canView = has('Home');
+  const canView = has("Home");
 
   return (
     <PageContainer title={`欢迎，${me.username}`}>
@@ -42,7 +42,7 @@ function Dashboard() {
 
   if (statsQuery.isPending) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
         <Spin />
       </div>
     );
@@ -62,7 +62,11 @@ function Dashboard() {
       </Col>
       <Col xs={12} md={6}>
         <Card>
-          <Statistic title="商品总数" value={counts.product} suffix={`/ 在售 ${counts.productOnSale}`} />
+          <Statistic
+            title="商品总数"
+            value={counts.product}
+            suffix={`/ 在售 ${counts.productOnSale}`}
+          />
         </Card>
       </Col>
       <Col xs={12} md={6}>
@@ -72,7 +76,11 @@ function Dashboard() {
       </Col>
       <Col xs={12} md={6}>
         <Card>
-          <Statistic title="活动总数" value={counts.activity} suffix={`/ 进行中 ${counts.activityOngoing}`} />
+          <Statistic
+            title="活动总数"
+            value={counts.activity}
+            suffix={`/ 进行中 ${counts.activityOngoing}`}
+          />
         </Card>
       </Col>
 
@@ -92,13 +100,25 @@ function Dashboard() {
         <Card title="订单状态分布">
           <Row gutter={16}>
             <Col span={8}>
-              <Statistic title="未付款" value={orderStatus.unpaid} valueStyle={{ color: '#faad14' }} />
+              <Statistic
+                title="未付款"
+                value={orderStatus.unpaid}
+                valueStyle={{ color: "#faad14" }}
+              />
             </Col>
             <Col span={8}>
-              <Statistic title="已付款" value={orderStatus.paid} valueStyle={{ color: '#52c41a' }} />
+              <Statistic
+                title="已付款"
+                value={orderStatus.paid}
+                valueStyle={{ color: "#52c41a" }}
+              />
             </Col>
             <Col span={8}>
-              <Statistic title="已取消" value={orderStatus.cancelled} valueStyle={{ color: '#999' }} />
+              <Statistic
+                title="已取消"
+                value={orderStatus.cancelled}
+                valueStyle={{ color: "#999" }}
+              />
             </Col>
           </Row>
         </Card>
@@ -120,26 +140,32 @@ function TrendChart(props: { trend: StatsTrendPointVo[] }) {
   const max = Math.max(...props.trend.map((p) => p.orderCount), 1);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
       {props.trend.map((p) => (
         <div
           key={p.date}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+          }}
         >
           <span style={{ fontSize: 12 }}>{p.orderCount}</span>
           <div
             title={`${p.date} 订单 ${p.orderCount} 单，营收 ¥${p.revenue}`}
             style={{
-              width: '60%',
+              width: "60%",
               maxWidth: 48,
               height: Math.round((p.orderCount / max) * BAR_MAX_HEIGHT),
               minHeight: p.orderCount > 0 ? 4 : 2,
-              background: p.orderCount > 0 ? '#1677ff' : '#f0f0f0',
-              borderRadius: '4px 4px 0 0',
+              background: p.orderCount > 0 ? "#1677ff" : "#f0f0f0",
+              borderRadius: "4px 4px 0 0",
             }}
           />
-          <span style={{ fontSize: 12, color: '#999' }}>{p.date.slice(5)}</span>
-          <span style={{ fontSize: 12, color: '#52c41a' }}>¥{p.revenue}</span>
+          <span style={{ fontSize: 12, color: "#999" }}>{p.date.slice(5)}</span>
+          <span style={{ fontSize: 12, color: "#52c41a" }}>¥{p.revenue}</span>
         </div>
       ))}
     </div>

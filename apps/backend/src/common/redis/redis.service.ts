@@ -1,6 +1,6 @@
-import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
-import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.constants';
+import { Inject, Injectable, OnModuleDestroy } from "@nestjs/common";
+import Redis from "ioredis";
+import { REDIS_CLIENT } from "./redis.constants";
 
 // 薄封装：只暴露业务用到的命令；key 前缀由 ioredis keyPrefix 统一拼接，业务侧不感知
 @Injectable()
@@ -15,7 +15,7 @@ export class RedisService implements OnModuleDestroy {
     return this.client.get(key);
   }
 
-  setex(key: string, ttlSeconds: number, value: string): Promise<'OK'> {
+  setex(key: string, ttlSeconds: number, value: string): Promise<"OK"> {
     return this.client.setex(key, ttlSeconds, value);
   }
 

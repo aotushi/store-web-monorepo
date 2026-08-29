@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
-import { Activity } from '../activity/entities/activity.entity';
-import { Order } from '../order/entities/order.entity';
-import { Product } from '../product/entities/product.entity';
-import { User } from '../user/entities/user.entity';
-import { StatsOverviewVo, StatsTrendPointVo } from './vo/stats-overview.vo';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { MoreThanOrEqual, Repository } from "typeorm";
+import { Activity } from "../activity/entities/activity.entity";
+import { Order } from "../order/entities/order.entity";
+import { Product } from "../product/entities/product.entity";
+import { User } from "../user/entities/user.entity";
+import { StatsOverviewVo, StatsTrendPointVo } from "./vo/stats-overview.vo";
 
 const ORDER_STATUS = { UNPAID: 0, PAID: 1, CANCELLED: 2 } as const;
 const TREND_DAYS = 7;
@@ -29,29 +29,38 @@ export class StatsService {
   }
 
   private formatDate(d: Date): string {
-    const pad = (n: number) => String(n).padStart(2, '0');
+    const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   async overview(): Promise<StatsOverviewVo> {
-    const [user, product, productOnSale, order, activity, activityOngoing, unpaid, paid, cancelled] =
-      await Promise.all([
-        this.userRepo.count(),
-        this.productRepo.count(),
-        this.productRepo.count({ where: { status: 1 } }),
-        this.orderRepo.count(),
-        this.activityRepo.count(),
-        this.activityRepo.count({ where: { status: 1 } }),
-        this.orderRepo.count({ where: { status: ORDER_STATUS.UNPAID } }),
-        this.orderRepo.count({ where: { status: ORDER_STATUS.PAID } }),
-        this.orderRepo.count({ where: { status: ORDER_STATUS.CANCELLED } }),
-      ]);
+    const [
+      user,
+      product,
+      productOnSale,
+      order,
+      activity,
+      activityOngoing,
+      unpaid,
+      paid,
+      cancelled,
+    ] = await Promise.all([
+      this.userRepo.count(),
+      this.productRepo.count(),
+      this.productRepo.count({ where: { status: 1 } }),
+      this.orderRepo.count(),
+      this.activityRepo.count(),
+      this.activityRepo.count({ where: { status: 1 } }),
+      this.orderRepo.count({ where: { status: ORDER_STATUS.UNPAID } }),
+      this.orderRepo.count({ where: { status: ORDER_STATUS.PAID } }),
+      this.orderRepo.count({ where: { status: ORDER_STATUS.CANCELLED } }),
+    ]);
 
     // decimal 的 SUM 经驱动回来是字符串（精度语义），Number() 收口
     const totalRaw = await this.orderRepo
-      .createQueryBuilder('o')
-      .select('COALESCE(SUM(o.discountPrice), 0)', 'total')
-      .where('o.status = :paid', { paid: ORDER_STATUS.PAID })
+      .createQueryBuilder("o")
+      .select("COALESCE(SUM(o.discountPrice), 0)", "total")
+      .where("o.status = :paid", { paid: ORDER_STATUS.PAID })
       .getRawOne<{ total: string }>();
     const total = Number(totalRaw?.total ?? 0);
 

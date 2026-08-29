@@ -1,11 +1,11 @@
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import type { ProColumns, ProFormInstance } from '@ant-design/pro-components';
-import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { App, Button, Form, Image, Input, InputNumber, Modal, Popconfirm, Upload } from 'antd';
-import { useEffect, useRef, useState } from 'react';
-import { applyFieldErrors, errorText } from '@/apis/error';
+import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns, ProFormInstance } from "@ant-design/pro-components";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { App, Button, Form, Image, Input, InputNumber, Modal, Popconfirm, Upload } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { applyFieldErrors, errorText } from "@/apis/error";
 import {
   getProductControllerListQueryKey,
   useProductControllerCreate,
@@ -14,12 +14,16 @@ import {
   useProductControllerList,
   useProductControllerRemove,
   useProductControllerUpdateStatus,
-} from '@/apis/generated/product/product';
-import type { CreateProductDto, EditProductDto, Product } from '@/apis/generated/storeWebAPI.schemas';
-import { useUploadControllerUploadImage } from '@/apis/generated/upload/upload';
-import { ApiError } from '@/apis/mutator';
-import { requireCode } from '@/permission/can';
-import { Permission } from '@/permission/Permission';
+} from "@/apis/generated/product/product";
+import type {
+  CreateProductDto,
+  EditProductDto,
+  Product,
+} from "@/apis/generated/storeWebAPI.schemas";
+import { useUploadControllerUploadImage } from "@/apis/generated/upload/upload";
+import { ApiError } from "@/apis/mutator";
+import { requireCode } from "@/permission/can";
+import { Permission } from "@/permission/Permission";
 
 // 复用 CRUD 样板（user 页），本页新点：页面码与操作码分离——进页只需 ProductList，
 // 新建/编辑/导入挂 ProductManage、上下架挂 updateStatus:product、删除挂 delete:product，
@@ -27,9 +31,9 @@ import { Permission } from '@/permission/Permission';
 const DEFAULT_PAGE_SIZE = 10;
 
 const STATUS_ENUM = {
-  0: { text: '未上架', status: 'Default' },
-  1: { text: '已上架', status: 'Success' },
-  2: { text: '已下架', status: 'Warning' },
+  0: { text: "未上架", status: "Default" },
+  1: { text: "已上架", status: "Success" },
+  2: { text: "已下架", status: "Warning" },
 } as const;
 
 interface ProductListSearch {
@@ -42,23 +46,23 @@ interface ProductListSearch {
 // 状态枚举含 0：一律与 undefined 显式区分，不能用 falsy（会把"未上架"当成没筛选）。
 // URL 层进来是 number、表单 valueEnum 层是 string，两个来源都在这收口成 0|1|2 字面量
 function parseStatus(v: unknown): 0 | 1 | 2 | undefined {
-  const n = typeof v === 'string' && v !== '' ? Number(v) : v;
+  const n = typeof v === "string" && v !== "" ? Number(v) : v;
   return n === 0 || n === 1 || n === 2 ? n : undefined;
 }
 
-export const Route = createFileRoute('/_authenticated/product/')({
+export const Route = createFileRoute("/_authenticated/product/")({
   validateSearch: (search: Record<string, unknown>): ProductListSearch => ({
-    page: typeof search.page === 'number' && search.page > 1 ? Math.floor(search.page) : undefined,
+    page: typeof search.page === "number" && search.page > 1 ? Math.floor(search.page) : undefined,
     pageSize:
-      typeof search.pageSize === 'number' &&
+      typeof search.pageSize === "number" &&
       search.pageSize > 0 &&
       search.pageSize !== DEFAULT_PAGE_SIZE
         ? Math.floor(search.pageSize)
         : undefined,
-    name: typeof search.name === 'string' && search.name !== '' ? search.name : undefined,
+    name: typeof search.name === "string" && search.name !== "" ? search.name : undefined,
     status: parseStatus(search.status),
   }),
-  beforeLoad: ({ context }) => requireCode(context.me, 'ProductList'),
+  beforeLoad: ({ context }) => requireCode(context.me, "ProductList"),
   component: ProductListPage,
 });
 
@@ -94,7 +98,7 @@ function ProductListPage() {
   const statusMutation = useProductControllerUpdateStatus({
     mutation: {
       onSuccess: (updated) => {
-        void message.success(updated.status === 1 ? '已上架' : '已下架');
+        void message.success(updated.status === 1 ? "已上架" : "已下架");
         void invalidateList();
       },
       onError: (err) => void message.error(errorText(err)),
@@ -104,7 +108,7 @@ function ProductListPage() {
   const removeMutation = useProductControllerRemove({
     mutation: {
       onSuccess: () => {
-        void message.success('已删除');
+        void message.success("已删除");
         if (page > 1 && listQuery.data?.list.length === 1) {
           void navigate({
             search: (prev) => ({ ...prev, page: page - 1 > 1 ? page - 1 : undefined }),
@@ -129,12 +133,12 @@ function ProductListPage() {
         const rowErrors = pickRowErrors(err);
         if (rowErrors) {
           modal.error({
-            title: '导入失败，请修正后重新上传（本次未入库）',
+            title: "导入失败，请修正后重新上传（本次未入库）",
             content: (
-              <ul style={{ paddingLeft: 20, maxHeight: 320, overflow: 'auto' }}>
+              <ul style={{ paddingLeft: 20, maxHeight: 320, overflow: "auto" }}>
                 {rowErrors.map((r) => (
                   <li key={r.row}>
-                    第 {r.row} 行：{r.errors.join('；')}
+                    第 {r.row} 行：{r.errors.join("；")}
                   </li>
                 ))}
               </ul>
@@ -148,39 +152,39 @@ function ProductListPage() {
   });
 
   const columns: ProColumns<Product>[] = [
-    { title: 'ID', dataIndex: 'id', width: 64, search: false },
+    { title: "ID", dataIndex: "id", width: 64, search: false },
     {
-      title: '图片',
-      dataIndex: 'images',
+      title: "图片",
+      dataIndex: "images",
       width: 72,
       search: false,
       render: (_, r) =>
         r.images ? (
-          <Image src={r.images} width={48} height={48} style={{ objectFit: 'cover' }} />
+          <Image src={r.images} width={48} height={48} style={{ objectFit: "cover" }} />
         ) : (
-          '-'
+          "-"
         ),
     },
-    { title: '名称', dataIndex: 'name', fieldProps: { placeholder: '商品名称模糊搜索' } },
-    { title: '描述', dataIndex: 'desc', ellipsis: true, search: false },
+    { title: "名称", dataIndex: "name", fieldProps: { placeholder: "商品名称模糊搜索" } },
+    { title: "描述", dataIndex: "desc", ellipsis: true, search: false },
     {
-      title: '价格',
-      dataIndex: 'price',
+      title: "价格",
+      dataIndex: "price",
       width: 100,
       search: false,
       render: (_, r) => `¥${r.price.toFixed(2)}`,
     },
-    { title: '状态', dataIndex: 'status', width: 96, valueEnum: STATUS_ENUM },
+    { title: "状态", dataIndex: "status", width: 96, valueEnum: STATUS_ENUM },
     {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      valueType: 'dateTime',
+      title: "更新时间",
+      dataIndex: "updateTime",
+      valueType: "dateTime",
       width: 170,
       search: false,
     },
     {
-      title: '操作',
-      valueType: 'option',
+      title: "操作",
+      valueType: "option",
       width: 168,
       render: (_, record) => [
         // 编辑接口挂 ProductManage 而页面码是 ProductList——仅有页面码的账号按钮不可见
@@ -200,7 +204,7 @@ function ProductListPage() {
               })
             }
           >
-            {record.status === 1 ? '下架' : '上架'}
+            {record.status === 1 ? "下架" : "上架"}
           </Button>
         </Permission>,
         <Permission key="remove" code="delete:product">
@@ -230,7 +234,7 @@ function ProductListPage() {
         columns={columns}
         dataSource={listQuery.data?.list}
         loading={listQuery.isFetching}
-        search={{ labelWidth: 'auto' }}
+        search={{ labelWidth: "auto" }}
         formRef={formRef}
         form={{
           initialValues: {
@@ -309,9 +313,9 @@ function pickRowErrors(err: unknown): { row: number; errors: string[] }[] | null
   const items = err.detail as unknown[];
   const ok = items.every(
     (it) =>
-      typeof it === 'object' &&
+      typeof it === "object" &&
       it !== null &&
-      typeof (it as { row?: unknown }).row === 'number' &&
+      typeof (it as { row?: unknown }).row === "number" &&
       Array.isArray((it as { errors?: unknown }).errors),
   );
   return ok && items.length ? (items as { row: number; errors: string[] }[]) : null;
@@ -331,9 +335,9 @@ function ImageUploadField(props: { value?: string; onChange?: (v: string) => voi
 
   if (props.value) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Image src={props.value} width={96} height={96} style={{ objectFit: 'cover' }} />
-        <Button size="small" onClick={() => props.onChange?.('')}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Image src={props.value} width={96} height={96} style={{ objectFit: "cover" }} />
+        <Button size="small" onClick={() => props.onChange?.("")}>
           移除
         </Button>
       </div>
@@ -346,7 +350,7 @@ function ImageUploadField(props: { value?: string; onChange?: (v: string) => voi
       // 前端预检是体验层，后端 fileFilter/2MB 限制兜底
       beforeUpload={(file) => {
         if (file.size > 2 * 1024 * 1024) {
-          void message.error('图片不能超过 2MB');
+          void message.error("图片不能超过 2MB");
           return Upload.LIST_IGNORE;
         }
         return true;
@@ -396,7 +400,7 @@ function CreateProductModal(props: { open: boolean; onClose: () => void; onSaved
 }
 
 function EditProductModal(props: { product?: Product; onClose: () => void; onSaved: () => void }) {
-  const [form] = Form.useForm<Omit<EditProductDto, 'id'>>();
+  const [form] = Form.useForm<Omit<EditProductDto, "id">>();
   const { message } = App.useApp();
 
   useEffect(() => {
@@ -405,7 +409,7 @@ function EditProductModal(props: { product?: Product; onClose: () => void; onSav
         name: props.product.name,
         desc: props.product.desc,
         price: props.product.price,
-        images: props.product.images ?? '',
+        images: props.product.images ?? "",
       });
     }
   }, [form, props.product]);
@@ -413,7 +417,7 @@ function EditProductModal(props: { product?: Product; onClose: () => void; onSav
   const editMutation = useProductControllerEdit({
     mutation: {
       onSuccess: () => {
-        void message.success('已保存');
+        void message.success("已保存");
         props.onSaved();
       },
       onError: (err) => {
@@ -424,7 +428,7 @@ function EditProductModal(props: { product?: Product; onClose: () => void; onSav
 
   return (
     <Modal
-      title={props.product ? `编辑商品「${props.product.name}」` : '编辑商品'}
+      title={props.product ? `编辑商品「${props.product.name}」` : "编辑商品"}
       open={!!props.product}
       onCancel={props.onClose}
       confirmLoading={editMutation.isPending}
@@ -451,17 +455,23 @@ function ProductFormItems() {
         name="name"
         label="名称"
         rules={[
-          { required: true, message: '请输入商品名称' },
-          { max: 50, message: '名称不能超过 50 字' },
+          { required: true, message: "请输入商品名称" },
+          { max: 50, message: "名称不能超过 50 字" },
         ]}
       >
         <Input placeholder="商品名称" />
       </Form.Item>
-      <Form.Item name="desc" label="描述" rules={[{ required: true, message: '请输入商品描述' }]}>
+      <Form.Item name="desc" label="描述" rules={[{ required: true, message: "请输入商品描述" }]}>
         <Input.TextArea rows={2} placeholder="商品描述" />
       </Form.Item>
-      <Form.Item name="price" label="价格" rules={[{ required: true, message: '请输入价格' }]}>
-        <InputNumber min={0.01} precision={2} prefix="¥" style={{ width: '100%' }} placeholder="0.00" />
+      <Form.Item name="price" label="价格" rules={[{ required: true, message: "请输入价格" }]}>
+        <InputNumber
+          min={0.01}
+          precision={2}
+          prefix="¥"
+          style={{ width: "100%" }}
+          placeholder="0.00"
+        />
       </Form.Item>
       <Form.Item name="images" label="图片">
         <ImageUploadField />

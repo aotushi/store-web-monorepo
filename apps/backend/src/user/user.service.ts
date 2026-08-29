@@ -3,20 +3,20 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { genSalt, hash } from 'bcryptjs';
-import { DataSource, In, Like, Repository } from 'typeorm';
-import type { RegisterDto } from '../auth/dto/register.dto';
-import type { RegisterVo } from '../auth/vo/register.vo';
-import { Permission } from '../permission/entities/permission.entity';
-import { Role } from '../role/entities/role.entity';
-import { User } from './entities/user.entity';
-import type { EditUserDto } from './dto/edit-user.dto';
-import type { FreezeUserDto } from './dto/freeze-user.dto';
-import type { UserQueryDto } from './dto/user-query.dto';
-import { CurrentUserVo } from './vo/current-user.vo';
-import { UserListVo } from './vo/user-list.vo';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { genSalt, hash } from "bcryptjs";
+import { DataSource, In, Like, Repository } from "typeorm";
+import type { RegisterDto } from "../auth/dto/register.dto";
+import type { RegisterVo } from "../auth/vo/register.vo";
+import { Permission } from "../permission/entities/permission.entity";
+import { Role } from "../role/entities/role.entity";
+import { User } from "./entities/user.entity";
+import type { EditUserDto } from "./dto/edit-user.dto";
+import type { FreezeUserDto } from "./dto/freeze-user.dto";
+import type { UserQueryDto } from "./dto/user-query.dto";
+import { CurrentUserVo } from "./vo/current-user.vo";
+import { UserListVo } from "./vo/user-list.vo";
 
 @Injectable()
 export class UserService {
@@ -29,9 +29,9 @@ export class UserService {
   // 认证专用：把 select:false 的 password 显式带出
   findByUsernameWithPassword(username: string): Promise<User | null> {
     return this.userRepo
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .where('user.username = :username', { username })
+      .createQueryBuilder("user")
+      .addSelect("user.password")
+      .where("user.username = :username", { username })
       .getOne();
   }
 
@@ -46,7 +46,7 @@ export class UserService {
       where: { id },
       relations: { roles: { permissions: true } },
     });
-    if (!user) throw new NotFoundException('用户不存在');
+    if (!user) throw new NotFoundException("用户不存在");
 
     // 多角色权限点按 id 去重平铺
     const permMap = new Map<number, Permission>();
@@ -83,7 +83,7 @@ export class UserService {
     const [list, total] = await this.userRepo.findAndCount({
       where: query.username ? { username: Like(`%${query.username}%`) } : {},
       relations: { roles: true },
-      order: { createTime: 'DESC' },
+      order: { createTime: "DESC" },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     });
@@ -93,7 +93,7 @@ export class UserService {
   // 注册/创建用户：应用层查重（表无唯一索引，沿用原库结构）
   async createUser(dto: RegisterDto): Promise<RegisterVo> {
     const exists = await this.userRepo.findOne({ where: { username: dto.username } });
-    if (exists) throw new ConflictException('用户名已存在');
+    if (exists) throw new ConflictException("用户名已存在");
 
     // bcrypt 的 salt 已内嵌在 hash 前 29 字符里，单独的 salt 列是原表设计冗余，写入只为兼容
     const salt = await genSalt(10);
@@ -101,7 +101,7 @@ export class UserService {
       username: dto.username,
       password: await hash(dto.password, salt),
       salt,
-      email: dto.email ?? '',
+      email: dto.email ?? "",
     });
     const saved = await this.userRepo.save(user);
     return { id: saved.id, username: saved.username };
@@ -119,7 +119,7 @@ export class UserService {
       where: { id: dto.id },
       relations: { roles: true },
     });
-    if (!user) throw new NotFoundException('用户不存在');
+    if (!user) throw new NotFoundException("用户不存在");
 
     if (dto.email !== undefined) user.email = dto.email;
     if (dto.avatar !== undefined) user.avatar = dto.avatar;
@@ -127,7 +127,7 @@ export class UserService {
     if (dto.roleIds) {
       const roles = await this.roleRepo.findBy({ id: In(dto.roleIds) });
       if (roles.length !== new Set(dto.roleIds).size) {
-        throw new BadRequestException('存在无效的角色 id');
+        throw new BadRequestException("存在无效的角色 id");
       }
       user.roles = roles;
     }
@@ -136,21 +136,21 @@ export class UserService {
 
   // 冻结/解冻；禁止操作自己（避免管理员把自己锁死）
   async setFreezed(dto: FreezeUserDto, operatorId: number): Promise<User> {
-    if (dto.id === operatorId) throw new BadRequestException('不能冻结自己的账号');
+    if (dto.id === operatorId) throw new BadRequestException("不能冻结自己的账号");
     const user = await this.userRepo.findOne({ where: { id: dto.id } });
-    if (!user) throw new NotFoundException('用户不存在');
+    if (!user) throw new NotFoundException("用户不存在");
     user.freezed = dto.freezed;
     return this.userRepo.save(user);
   }
 
   // 删除用户；表无外键约束，中间表需一并清理，多表写裹事务
   async remove(id: number, operatorId: number): Promise<void> {
-    if (id === operatorId) throw new BadRequestException('不能删除自己的账号');
+    if (id === operatorId) throw new BadRequestException("不能删除自己的账号");
     const user = await this.userRepo.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('用户不存在');
+    if (!user) throw new NotFoundException("用户不存在");
 
     await this.dataSource.transaction(async (em) => {
-      await em.query('DELETE FROM store_user_role WHERE userId = ?', [id]);
+      await em.query("DELETE FROM store_user_role WHERE userId = ?", [id]);
       await em.delete(User, id);
     });
   }

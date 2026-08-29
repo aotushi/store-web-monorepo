@@ -1,4 +1,4 @@
-import type { Permission } from '@/apis/generated/storeWebAPI.schemas';
+import type { Permission } from "@/apis/generated/storeWebAPI.schemas";
 
 export interface PermissionTreeNode {
   key: number;

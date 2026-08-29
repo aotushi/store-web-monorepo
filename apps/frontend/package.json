@@ -1,8 +1,8 @@
 {
   "name": "frontend",
   "version": "0.0.1",
-  "description": "store-web 前端（React 18 + Vite + TanStack Query，API 层由 orval 从后端契约生成）",
   "private": true,
+  "description": "store-web 前端（React 18 + Vite + TanStack Query，API 层由 orval 从后端契约生成）",
   "type": "module",
   "scripts": {
     "dev": "vite",

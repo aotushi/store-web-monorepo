@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Like, Repository } from 'typeorm';
-import type { CreateProductDto } from './dto/create-product.dto';
-import type { EditProductDto } from './dto/edit-product.dto';
-import type { ProductQueryDto } from './dto/product-query.dto';
-import type { UpdateProductStatusDto } from './dto/update-product-status.dto';
-import { Product } from './entities/product.entity';
-import type { ProductListVo } from './vo/product-list.vo';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DataSource, Like, Repository } from "typeorm";
+import type { CreateProductDto } from "./dto/create-product.dto";
+import type { EditProductDto } from "./dto/edit-product.dto";
+import type { ProductQueryDto } from "./dto/product-query.dto";
+import type { UpdateProductStatusDto } from "./dto/update-product-status.dto";
+import { Product } from "./entities/product.entity";
+import type { ProductListVo } from "./vo/product-list.vo";
 
 @Injectable()
 export class ProductService {
@@ -33,7 +33,7 @@ export class ProductService {
         ...(query.name ? { name: Like(`%${query.name}%`) } : {}),
         ...(query.status !== undefined ? { status: query.status } : {}),
       },
-      order: { createTime: 'DESC' },
+      order: { createTime: "DESC" },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     });
@@ -44,14 +44,14 @@ export class ProductService {
   findHotList(): Promise<Product[]> {
     return this.productRepo.find({
       where: { status: 1 },
-      order: { updateTime: 'DESC' },
+      order: { updateTime: "DESC" },
       take: 10,
     });
   }
 
   async findById(id: number): Promise<Product> {
     const product = await this.productRepo.findOne({ where: { id } });
-    if (!product) throw new NotFoundException('商品不存在');
+    if (!product) throw new NotFoundException("商品不存在");
     return product;
   }
 
@@ -75,16 +75,16 @@ export class ProductService {
     await this.findById(id);
     const [[order], [activity]] = await Promise.all([
       this.dataSource.query<{ n: string }[]>(
-        'SELECT COUNT(*) n FROM store_order WHERE productId = ?',
+        "SELECT COUNT(*) n FROM store_order WHERE productId = ?",
         [id],
       ),
       this.dataSource.query<{ n: string }[]>(
-        'SELECT COUNT(*) n FROM store_activity WHERE productId = ?',
+        "SELECT COUNT(*) n FROM store_activity WHERE productId = ?",
         [id],
       ),
     ]);
-    if (Number(order.n) > 0) throw new BadRequestException('商品已被订单引用，不可删除');
-    if (Number(activity.n) > 0) throw new BadRequestException('商品已被活动引用，不可删除');
+    if (Number(order.n) > 0) throw new BadRequestException("商品已被订单引用，不可删除");
+    if (Number(activity.n) > 0) throw new BadRequestException("商品已被活动引用，不可删除");
     await this.productRepo.delete(id);
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { ActivityService } from './activity.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { ActivityService } from "./activity.service";
 
 // 活动状态每分钟对账一次：只修正漂移行，无漂移时零写入零日志
 @Injectable()

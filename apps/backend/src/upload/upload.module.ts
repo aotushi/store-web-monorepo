@@ -1,7 +1,7 @@
-import { mkdirSync } from 'node:fs';
-import { Module, OnModuleInit } from '@nestjs/common';
-import { UploadController } from './upload.controller';
-import { UPLOAD_DIR } from './upload.constants';
+import { mkdirSync } from "node:fs";
+import { Module, OnModuleInit } from "@nestjs/common";
+import { UploadController } from "./upload.controller";
+import { UPLOAD_DIR } from "./upload.constants";
 
 @Module({
   controllers: [UploadController],

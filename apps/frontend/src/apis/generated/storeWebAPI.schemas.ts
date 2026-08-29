@@ -466,6 +466,57 @@ export interface EditActivityDto {
   productId?: number;
 }
 
+export interface StatsCountsVo {
+  /** 用户总数 */
+  user: number;
+  /** 商品总数 */
+  product: number;
+  /** 在售商品数 */
+  productOnSale: number;
+  /** 订单总数 */
+  order: number;
+  /** 活动总数 */
+  activity: number;
+  /** 进行中活动数 */
+  activityOngoing: number;
+}
+
+export interface StatsOrderStatusVo {
+  /** 未付款单数 */
+  unpaid: number;
+  /** 已付款单数 */
+  paid: number;
+  /** 已取消单数 */
+  cancelled: number;
+}
+
+export interface StatsRevenueVo {
+  /** 累计营收（已付款订单折后价合计） */
+  total: number;
+  /** 今日营收（本地日界） */
+  today: number;
+}
+
+export interface StatsTrendPointVo {
+  /** 日期（YYYY-MM-DD，本地时区） */
+  date: string;
+  /** 当日订单数（含未付款/已取消） */
+  orderCount: number;
+  /** 当日营收（仅已付款） */
+  revenue: number;
+}
+
+export interface StatsOverviewVo {
+  /** 实体总量 */
+  counts: StatsCountsVo;
+  /** 订单状态分布 */
+  orderStatus: StatsOrderStatusVo;
+  /** 营收 */
+  revenue: StatsRevenueVo;
+  /** 近 7 日趋势（含今天，缺日补零） */
+  trend: StatsTrendPointVo[];
+}
+
 export interface UploadResultVo {
   /** 可公开访问的图片路径（serve-static /uploads） */
   url: string;

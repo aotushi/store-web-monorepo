@@ -17,6 +17,7 @@ import { OrderModule } from './order/order.module';
 import { PermissionModule } from './permission/permission.module';
 import { ProductModule } from './product/product.module';
 import { RoleModule } from './role/role.module';
+import { StatsModule } from './stats/stats.module';
 import { UploadModule } from './upload/upload.module';
 import { UPLOAD_DIR } from './upload/upload.constants';
 import { UserModule } from './user/user.module';
@@ -62,6 +63,7 @@ import { UserModule } from './user/user.module';
     ProductModule,
     OrderModule,
     ActivityModule,
+    StatsModule,
     UploadModule,
   ],
   providers: [

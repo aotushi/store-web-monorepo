@@ -1309,6 +1309,33 @@
         ]
       }
     },
+    "/api/stats/overview": {
+      "get": {
+        "operationId": "StatsController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsOverviewVo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "首页看板聚合统计",
+        "tags": [
+          "stats"
+        ]
+      }
+    },
     "/api/upload/image": {
       "post": {
         "operationId": "UploadController_uploadImage",
@@ -2345,6 +2372,146 @@
         },
         "required": [
           "id"
+        ]
+      },
+      "StatsCountsVo": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "number",
+            "description": "用户总数"
+          },
+          "product": {
+            "type": "number",
+            "description": "商品总数"
+          },
+          "productOnSale": {
+            "type": "number",
+            "description": "在售商品数"
+          },
+          "order": {
+            "type": "number",
+            "description": "订单总数"
+          },
+          "activity": {
+            "type": "number",
+            "description": "活动总数"
+          },
+          "activityOngoing": {
+            "type": "number",
+            "description": "进行中活动数"
+          }
+        },
+        "required": [
+          "user",
+          "product",
+          "productOnSale",
+          "order",
+          "activity",
+          "activityOngoing"
+        ]
+      },
+      "StatsOrderStatusVo": {
+        "type": "object",
+        "properties": {
+          "unpaid": {
+            "type": "number",
+            "description": "未付款单数"
+          },
+          "paid": {
+            "type": "number",
+            "description": "已付款单数"
+          },
+          "cancelled": {
+            "type": "number",
+            "description": "已取消单数"
+          }
+        },
+        "required": [
+          "unpaid",
+          "paid",
+          "cancelled"
+        ]
+      },
+      "StatsRevenueVo": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "累计营收（已付款订单折后价合计）"
+          },
+          "today": {
+            "type": "number",
+            "description": "今日营收（本地日界）"
+          }
+        },
+        "required": [
+          "total",
+          "today"
+        ]
+      },
+      "StatsTrendPointVo": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "日期（YYYY-MM-DD，本地时区）"
+          },
+          "orderCount": {
+            "type": "number",
+            "description": "当日订单数（含未付款/已取消）"
+          },
+          "revenue": {
+            "type": "number",
+            "description": "当日营收（仅已付款）"
+          }
+        },
+        "required": [
+          "date",
+          "orderCount",
+          "revenue"
+        ]
+      },
+      "StatsOverviewVo": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "description": "实体总量",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatsCountsVo"
+              }
+            ]
+          },
+          "orderStatus": {
+            "description": "订单状态分布",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatsOrderStatusVo"
+              }
+            ]
+          },
+          "revenue": {
+            "description": "营收",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatsRevenueVo"
+              }
+            ]
+          },
+          "trend": {
+            "description": "近 7 日趋势（含今天，缺日补零）",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatsTrendPointVo"
+            }
+          }
+        },
+        "required": [
+          "counts",
+          "orderStatus",
+          "revenue",
+          "trend"
         ]
       },
       "UploadResultVo": {

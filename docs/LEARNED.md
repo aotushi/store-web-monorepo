@@ -132,3 +132,17 @@
 - **看板聚合接口的四个设计题一次答全**：① 端点形状——一屏一请求（单 /stats/overview 复合 VO）而非四个小端点：看板无局部刷新诉求，多端点只多出瀑布与部分失败态；嵌套结构逐个显式 VO 类声明，orval 端拿到完整类型树。② 权限——复用 Home 页面码不新造 Dashboard 码：权限点与 @RequirePermission 同源只读是既定契约，新码要动种子数据。③ 口径——计单与计钱分离（cancelled/unpaid 计单不计钱、total 全量 paid、today/trend 只看窗口），口径不是实现细节而是接口契约，写进字段描述。④ 时区——UTC 容器 + 本地日界的"SQL 取行 JS 分桶"。实证手法同样可讲：fixtures 按口径边界设计（跨日界对单、窗口外大单），断言的是口径本身而非"接口通了"
 - **数据层门控补全三级门控的第四位（enabled 双闸）**：首页守卫豁免（防"登录成功即 403"死角）但统计接口挂 Home 码——若只做渲染分支，无码账号的 query 照发、403 照吃；正解是门控下沉数据层：`canView` 同时控渲染（降级卡）与 `useQuery enabled`（不发请求），浏览器实证撤码后 /stats 请求数为 **0**。与角色页"树字段双门控"（字段渲染 + role/list enabled）同一模式的页级应用——规律：**权限判定要同时抵达"看得见什么"与"发不发请求"两个消费端**，只控 UI 是把 403 当 UX，只控请求是空屏无解释
 - **金额的"权威在服务端"要做成协议而不是约定**：CreateOrderDto 里根本没有金额字段——前端想篡改都没有载体，服务端按商品价快照 × 数量 × 折扣用整数分位乘法算出 price/discountPrice；前端弹窗的金额预览用**同款 moneyMul 算法**并明示"以后端为准"，实测预览 ¥60.00/¥52.80 与响应逐分一致——不一致就是两端算法漂移的报警器。可延伸：快照语义的可视化——详情抽屉把商品当前价并列在订单快照价旁，调价 26→30 后 Tag"与下单时不同"点亮而订单价纹丝不动，"订单是历史事实不随商品变"从字段设计变成肉眼可验的产品行为
+
+## 工程化收尾阶段（2026-08-29）
+
+### 知识点
+
+- **换代工具的"默认值差异"要用显式化消解，不是改代码迁就**：vp check 的 type 阶段（tsgolint，TS7/tsgo 工具链）一开跑就爆 128 个 TS2564（属性无初始化器）——NestJS 全部 DTO/VO/entity 的形状声明式写法都中招，但本地 tsc --noEmit 一直是绿的。根因不是代码错而是**默认值不同**：tsgo 把 strict 家族默认开，tsc 默认关。解法是往 tsconfig 写显式 `strictPropertyInitialization: false`——显式声明让两套工具读出同一语义，比给上百个属性加 `!` 断言（迁就新工具）或放弃 type 阶段（迁就旧习惯）都对。配套两处 tsconfig 现代化：tsgo 要求 rootDir 显式、baseUrl 已废弃（无 paths 时删掉零影响）
+- **oxfmt/oxlint 的配置发现机制会执行子项目 vite.config**：vp 的 fmt/lint 为了读 `lint`/`fmt` 配置字段会 loadViteConfigField——真的 resolveConfig 执行 apps/frontend/vite.config.ts，tanstack router 插件在错误 cwd 下 configResolved 即扫 src/routes 报 ENOENT（走 allSettled 不中断，只留噪音栈）。同族坑：`vp fmt <glob>` 形态会直接崩，无参 `vp check` 不崩。工程含义：**vite.config 会被构建以外的工具在任意 cwd 执行**，插件副作用（生成文件、扫目录）要能容忍这一点；vp 的 ignore 默认读 .gitignore + .prettierignore，生成物排除一处配置两套工具同时生效
+- **manualChunks 不是银弹，antd 生态按包名切必产循环 chunk**：两轮实验数据——antd 全聚一块得 1.3MB（比原警告块更大）；细分 antd/rc-*/icons/pro 四块得 3 块仍超 500KB 外加两条 Circular chunk 警告（rc-util 类共享工具被所有分组交叉引用，切法违背模块图）。有效的部分：react/tanstack 这类**依赖图干净**的 vendor 拆出后入口块 580KB→320KB。剩余 Table 链路 1MB 块的处置是显式 chunkSizeWarningLimit + 注释存证——gzip 后 322KB、懒加载共享块、后台系统场景可接受；**警告线是提示不是 KPI，评估口径是 gzip 传输量与缓存命中，不是 min 后的数字好看**
+- **生产分块必须用产物验证，dev server 证明不了**：dev 模式走 esm 直出不经过 rollup 分块，manualChunks 配错（循环加载、初始化顺序）只在 build 产物上白屏。vite preview 起 dist + `preview.proxy` 配同 dev 的后端代理（一处常量两处引用），登录进列表页跑真实请求链——顺带把 mutator 序列化改动的冒烟一起做了（page/pageSize number、中文 name URL 编码逐一实证 200）
+
+### 面试可讲
+
+- **三合一 check 的工具链换代（oxfmt+oxlint+tsgolint）**：原本 check 是三工具三套配置三次进程（prettier/eslint/tsc，全仓分钟级）；vp check 一条命令 fmt+lint+type 三阶段 ~1.9s（32 线程，Rust 系）。落地要点三件：① 分域共存——oxfmt 只管 js/ts，prettier 保留 less/css/json/md/yml/html（实测两者对 json 结果兼容，无缝换）；② beta 工具的风险管理——PLAN 预留"type 阶段噎住就退回 tsc --noEmit"的逃生门，实验后默认值差异可显式化消解、没用上退路，但**先想好退路再上车**的决策结构本身可讲；③ 全仓格式化 commit 单独隔离（114 文件纯格式），逻辑变更零混入，git blame 可跳过
+- **分包优化的诚实工程学**：面对 1MB chunk 警告，没有直接抄"manualChunks 按包名切 vendor"的网红配方，而是实验驱动——两轮切法的尺寸/循环警告数据摆出来，结论是 antd 模块图纠缠不可按包切；最终形态"切干净的（react/tanstack，入口 -45%）+ 接受切不动的（显式提线+注释存证）"。能引申：优化的第一产出是**认知边界**（什么能优化、什么是固有形态），把警告压没的手段有一万种，留下"为什么停在这里"的证据才是工程判断

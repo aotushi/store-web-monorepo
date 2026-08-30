@@ -1,5 +1,6 @@
 # CI 真门禁（钩子可被 --no-verify 绕过，见 PLAN §4.4）
-# check（vp 三合一 + prettier）→ 前端单测 → 双端构建；构建纯编译不依赖 docker 服务
+# check（vp 三合一 + prettier）→ 双端单测 → 双端构建 → 后端 e2e 冒烟
+# 单测/构建纯编译零服务依赖；e2e 连 services 起的 mysql/redis（凭据对齐 docker-compose 默认值）
 name: CI
 
 on:
@@ -10,6 +11,30 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: store123456
+          MYSQL_DATABASE: store_web_project
+          TZ: Asia/Shanghai
+        ports:
+          # 宿主侧对齐 .env.example 的 DB_PORT=3307（本地 docker compose 同端口）
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pstore123456"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,5 +45,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm --filter frontend exec vitest --run
+      - run: pnpm --filter backend test
       - run: pnpm --filter backend build
       - run: pnpm --filter frontend build
+      # e2e 前灌种子数据：services 容器起在 checkout 之前挂不了卷，用 mysql client 手动导入
+      # （cat 管道而非重定向——bash 对重定向目标不做 glob 展开）
+      - run: cat sql/*.sql | mysql -h127.0.0.1 -P3307 -uroot -pstore123456 store_web_project
+      # .env.example 的默认值即 compose/services 凭据，clone 后零配置可跑（含 e2e）
+      - run: cp apps/backend/.env.example apps/backend/.env
+      - run: pnpm --filter backend test:e2e

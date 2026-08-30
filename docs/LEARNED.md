@@ -146,3 +146,18 @@
 
 - **三合一 check 的工具链换代（oxfmt+oxlint+tsgolint）**：原本 check 是三工具三套配置三次进程（prettier/eslint/tsc，全仓分钟级）；vp check 一条命令 fmt+lint+type 三阶段 ~1.9s（32 线程，Rust 系）。落地要点三件：① 分域共存——oxfmt 只管 js/ts，prettier 保留 less/css/json/md/yml/html（实测两者对 json 结果兼容，无缝换）；② beta 工具的风险管理——PLAN 预留"type 阶段噎住就退回 tsc --noEmit"的逃生门，实验后默认值差异可显式化消解、没用上退路，但**先想好退路再上车**的决策结构本身可讲；③ 全仓格式化 commit 单独隔离（114 文件纯格式），逻辑变更零混入，git blame 可跳过
 - **分包优化的诚实工程学**：面对 1MB chunk 警告，没有直接抄"manualChunks 按包名切 vendor"的网红配方，而是实验驱动——两轮切法的尺寸/循环警告数据摆出来，结论是 antd 模块图纠缠不可按包切；最终形态"切干净的（react/tanstack，入口 -45%）+ 接受切不动的（显式提线+注释存证）"。能引申：优化的第一产出是**认知边界**（什么能优化、什么是固有形态），把警告压没的手段有一万种，留下"为什么停在这里"的证据才是工程判断
+
+## 后端自动化测试（2026-08-30）
+
+### 知识点
+
+- **构造注入纯类的两种测试形态，薄的优先**：守卫与 service 全部依赖走构造注入、不碰 req/res（PLAN §6.4 边界），于是单测可以**直构 + 手写依赖桩**（`new JwtAuthGuard(jwtStub, reflectorStub, configStub)`），不起 Nest 测试容器——13 个用例毫秒级。`@nestjs/testing` 的 `Test.createTestingModule` 只在 e2e 用（要的就是真实 DI 图与全模块装配）。判据：单测测的是**这个类的分支语义**，容器是无关成本；e2e 测的是**装配本身**，容器就是被测物
+- **e2e 与运行时的装配必须同源，否则测的是另一个应用**：全局前缀/ValidationPipe/响应壳/异常过滤器原先在 main.ts bootstrap 手工挂载——e2e 若自行复制这段，改一处忘一处后 e2e 通过但生产行为不同。抽 `setup-app.ts` 共享函数（main.ts 与 e2e 各调一次）后，supertest 断言的壳形状、字段级 400、守卫链就是生产链路本身。全局守卫不在此列——APP_GUARD 是 AppModule 的 provider，随模块自带，这正是"守卫注册进模块而非 main.ts"的隐藏红利
+- **tsc 增量构建的状态文件与产物可以脱节**：`rm -rf dist` 后重跑 nest build，产物只有两个改动过的文件——`.tsbuildinfo` 还在，增量逻辑判定其余文件"无需重发射"，跑 start:prod 直接 `Cannot find module './app.module'`。删产物必须连状态一起删（`*.tsbuildinfo` 已在 .gitignore，但**在磁盘上仍会骗过下一次构建**）；CI 无此坑（每次全新 checkout），这是"本地绿 CI 也绿"反过来不成立的一个实例
+- **tsgo 的 @types 处理与 tsc 又一处默认值差异**：加入首个 spec 文件后 vp check 爆 69 个 `Cannot find name 'expect'`——tsc 默认自动包含所有 node_modules/@types，tsgo 不扫。解法仍是显式化：`types: ["node", "jest"]` 白名单让两套工具读到同一语义。要点：`types` 字段只控制**全局环境类型注入**，import 触发的模块型 @types（express/supertest 等）不受影响，白名单不会误伤
+- **GitHub Actions services 的两个形态约束**：① service 容器在 checkout 之前启动，挂不了仓库卷——compose 里 `/docker-entrypoint-initdb.d` 的种子初始化在 CI 里要改成 mysql client 手动灌；② `mysql < sql/*.sql` 会失败，bash 对**重定向目标不做 glob 展开**，得走 `cat sql/*.sql | mysql`。凭据/端口直接对齐 compose 默认值（3307/store123456），`.env.example` 复制即 CI 环境——"clone 后零配置"的决策在第三个环境（本地 dev / docker / CI）兑现
+
+### 面试可讲
+
+- **测试边界是选出来的，不是越多越好**：PLAN §6.6 提前划线——service 纯逻辑必测（RBAC 判定、续期阈值这两处**出错即安全事故**的分支）+ auth 一条 e2e 冒烟（装配级回归网），controller 薄层与 CRUD 搬运不测。13 单测 + 4 e2e 不到百行断言，覆盖的是"权限判错放行越权请求""续期签出带旧 exp 的死 token"这类高价值故障面；能讲清楚**为什么不测的部分不值得测**（薄层无分支、改动即编译错），比堆覆盖率数字更有说服力
+- **CI 门禁的分层演进**：三步走有意为之——先 check（静态）、再 build（能编译）、最后 services + e2e（能运行）；每层失败定位成本递增，便宜的挡在前面。e2e 那层把 dev 环境的三件套决策（compose 凭据即默认值、种子 sql 单文件、.env.example 可直接用）在 CI 复用，新环境接入成本趋近于零——基础设施决策的复利体现

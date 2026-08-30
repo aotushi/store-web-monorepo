@@ -3,7 +3,11 @@
   "compilerOptions": {
     // 检查用 tsconfig 的 rootDir 为 "."（覆盖 test/ 的 e2e 文件）；
     // 构建输入只有 src，锁回 ./src 保住 dist/main.js 布局（start:prod 依赖）
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // nest-cli deleteOutDir 每次清空 dist，而 tsbuildinfo 存活在 dist 外 →
+    // 二次构建 tsc 认为"无变化"只发射改动文件，dist 必然半截（start:prod 崩）。
+    // deleteOutDir 语义下增量状态有害无益，构建侧强制全量发射
+    "incremental": false
   },
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }

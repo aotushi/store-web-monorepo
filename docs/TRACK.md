@@ -7,8 +7,8 @@
 
 ## NOW（会话接续点）
 
-- **当前阶段**：5 工程化收尾 **✅ 后端自动化测试清账**——单测 13 例（守卫/服务直构桩测）+ auth e2e 冒烟 4 例（真库真 redis，setupApp 与运行时同源装配）；CI 升级"能运行"（mysql/redis services + 种子导入 + e2e 入门禁）
-- **下一步**：剩余挂账择做——seed 商品图 404、fresh-clone husky prepare 验证；或直接进入收官整理（README/面试素材梳理）
+- **当前阶段**：5 工程化收尾 **✅ 挂账双清**——seed 商品图 404（种子图入仓 `sql/seed-uploads/` + ServeStatic 双条目兜底，curl 四点实测）+ fresh-clone husky prepare 实证自动挂钩；顺藤根治 nest build 半截 dist（deleteOutDir × tsbuildinfo 脱节的真机制）
+- **下一步**：收官整理（README/面试素材梳理）
 - **测试账号**：`test / a123456`（超管）、`test1 / a123456`（服务员，用于 403 验证）
 - **环境**：dev 混合式——`docker compose up -d`（mysql:**3307** / redis:6379 常驻）+ 后端 `pnpm --filter backend dev`（http://localhost:3000/api，swagger /api-docs）
 - **阻塞**：无
@@ -29,7 +29,7 @@
 - [x] 首次提交（4 commits，conventional）+ 远程仓库 [aotushi/store-web-monorepo](https://github.com/aotushi/store-web-monorepo)（public，main 已跟踪；原名 nestjs-store-web-backend，2026-07-30 更名消除"仅后端"歧义）
 - [x] `pnpm check` 接入 `vp check`（2026-08-29：fmt+lint+type 三合一 ~1.9s，根 vite.config 开 tsgolint；见 §5）
 - [x] CI 补 test/build 步骤（2026-08-29：check → vitest → 双端 build，编译不依赖 docker 服务）
-- [ ] fresh clone 验证 `pnpm install` 是否自动触发 prepare 挂钩（本次是手动 `pnpm exec husky` 挂的）
+- [x] fresh clone 验证 `pnpm install` 是否自动触发 prepare 挂钩（2026-08-30 实证：clone → install → `core.hooksPath=.husky/_` 且钩子目录就位，root `"prepare": "husky"` 自动生效，无需手动挂）
 
 ### 2 后端 ✅（2026-07-30 ~ 07-31）
 
@@ -97,6 +97,8 @@
 - [x] 后端单测 13 例（2026-08-30，PLAN §6.6 点名测点）：JwtAuthGuard 续期阈值分支（重签不带旧 exp）、PermissionGuard RBAC 判定（超管旁路空码集合放行的决定性用例）、getAuthInfo 跨角色码集聚合；守卫/服务是构造注入纯类 → 直构桩测零 Nest 容器
 - [x] auth e2e 冒烟 4 例（真 mysql/redis）：login 200/401 壳、无 token 401（全局守卫在场）、currentUser 角色权限点随行；`setup-app.ts` 抽取全局链路装配，e2e 与 main.ts 同源（对齐 swagger.ts 决策）
 - [x] CI 升级"能运行"：单测入 check 链 + job 级 mysql:8/redis:7 services（凭据对齐 compose 默认值）+ mysql client 灌种子 sql + `cp .env.example .env` 即 CI 环境 + e2e 收尾；远程实测全绿
+- [x] seed 商品图 404 清账（2026-08-30）：两张 webp 种子图入仓 `sql/seed-uploads/`（文件名与种子 sql 精确一致），ServeStatic 第二条目同挂 /uploads——真实上传优先、种子图兜底、未命中落标准 404 壳（renderPath 哨兵废掉每条目的 SPA 回退通配，源码验证）；curl 四点实测含同名优先级实证
+- [x] nest build 半截 dist 根治（2026-08-30）：deleteOutDir 每次清空产物而 tsbuildinfo 存活 dist 外，二次构建只发射改动文件 → start:prod 必崩；build 配置关 incremental，连续两次构建 27 项产物齐回归验证
 
 ## 时间线（session 日志；耗时为粗估）
 
@@ -120,6 +122,7 @@
 | 2026-08-29 | 1h    | 首页看板：后端 stats 聚合模块（Home 码复用、JS 日界分桶、嵌套 VO）+ 前端看板重写（数据层双闸门控、手写 CSS 柱状图）；跨日 fixtures 实证聚合口径     | 阶段 4 收官（feat commit）   |
 | 2026-08-29 | 1.5h  | 阶段 5 收尾：vp check 三合一接入（tsgolint 默认值差异排雷 128 假报）、全仓 oxfmt、type-aware 清零、CI 补 test/build、manualChunks 实验与显式提线    | 阶段 5 收官（4 commits）     |
 | 2026-08-30 | 1h    | 后端自动化测试清账：守卫/服务单测 13 例 + auth e2e 冒烟 4 例（setupApp 同源抽取）+ CI services 跑 e2e；tsbuildinfo 残留、tsgo types 白名单两坑排除  | 测试挂账清零（3 commits）    |
+| 2026-08-30 | 0.5h  | 挂账双清：种子图入仓 + ServeStatic 兜底条目（SPA 回退截胡坑读源码定位）、fresh-clone husky 实证自动挂钩；顺藤摸出 nest build 半截 dist 真机制并根治 | 挂账清零（2 commits）        |
 
 ## 临场决策（开工后新决策 / 与 PLAN 的偏离；大方向变化才回写 PLAN）
 
@@ -200,3 +203,6 @@
 | 2026-08-30 | tsconfig rootDir 分治：检查用 `.`（含 test/），build 覆写 `./src`                 | e2e 进 tsgolint 视野要求 rootDir 盖住 test/，但 dist/main.js 布局（start:prod）不能动；分治各取所需                       |
 | 2026-08-30 | tsgo 不自动扫 @types → 显式 `types: ["node","jest"]` 白名单                       | 与 strictPropertyInitialization 同族的显式化消解；types 只控全局注入，模块型 @types（express 等）不受影响                 |
 | 2026-08-30 | CI e2e 用 job 级 services，凭据/端口对齐 compose 默认值，env 直接 cp .env.example | .env.example 默认值=compose 凭据的既有决策在 CI 兑现"clone 后零配置"；services 起在 checkout 前挂不了卷，种子走 client 灌 |
+| 2026-08-30 | 种子商品图作仓库资产放 `sql/seed-uploads/`，ServeStatic 双条目同挂 /uploads 兜底  | 与种子 sql 同居同生命周期；上传目录条目注册在前天然优先；三环境（本地/docker/CI）clone 即零 404，零手工步骤               |
+| 2026-08-30 | 双条目 renderPath 指哨兵路径，废掉每条目的 SPA 回退通配                           | 该库无关闭开关，GET 通配 sendFile(index.html) 截胡未命中请求穿透不到下一条目；副产物：静态 404 从泄露文件系统路径变标准壳 |
+| 2026-08-30 | tsconfig.build.json 关 incremental（nest build 专用）                             | deleteOutDir 每次清空 dist 而 tsbuildinfo 存活在外，增量判定"无需重发射"必产半截 dist；deleteOutDir 语义下增量状态纯有害  |

@@ -161,3 +161,15 @@
 
 - **测试边界是选出来的，不是越多越好**：PLAN §6.6 提前划线——service 纯逻辑必测（RBAC 判定、续期阈值这两处**出错即安全事故**的分支）+ auth 一条 e2e 冒烟（装配级回归网），controller 薄层与 CRUD 搬运不测。13 单测 + 4 e2e 不到百行断言，覆盖的是"权限判错放行越权请求""续期签出带旧 exp 的死 token"这类高价值故障面；能讲清楚**为什么不测的部分不值得测**（薄层无分支、改动即编译错），比堆覆盖率数字更有说服力
 - **CI 门禁的分层演进**：三步走有意为之——先 check（静态）、再 build（能编译）、最后 services + e2e（能运行）；每层失败定位成本递增，便宜的挡在前面。e2e 那层把 dev 环境的三件套决策（compose 凭据即默认值、种子 sql 单文件、.env.example 可直接用）在 CI 复用，新环境接入成本趋近于零——基础设施决策的复利体现
+
+## 挂账清账（2026-08-30）
+
+### 知识点
+
+- **@nestjs/serve-static 多条目兜底会被每条目的 SPA 回退截胡**：设想很直——同一 serveRoot 挂两条目（uploads 在前、seed 在后），express.static fallthrough 未命中放行到下一条。实测全 404，错误信息 `stat '...uploads\index.html'` 暴露真凶：ExpressLoader 对**每个条目**无条件注册 `GET serveRoot+renderPath`（默认通配）的 SPA 回退路由做 sendFile(index.html)——它不是 express.static 的选项，`index:false` 管不到。旋钮是 `renderPath`：指到哨兵路径让通配失效，未命中才能穿透到下一条目、最终落 Nest 标准 404 壳。方法论：中间件顺序问题，读**装的那个版本**的源码（node_modules 里 60 行）比翻文档/issue 快且准
+- **nest build 半截 dist 的完整机制（上一切片坑的升级版）**：上次归因"手工 rm dist 没删 tsbuildinfo"，本次复现发现无需手工——nest-cli `deleteOutDir: true` 每次构建**自己**清空 dist，而 tsbuildinfo 存活在 dist 外，增量判定"其余文件无需重发射"→ 任何二次构建必产半截 dist（改两个文件就只发射两个文件），start:prod 必崩 MODULE_NOT_FOUND。deleteOutDir 语义下增量状态纯有害，build 配置显式 `incremental: false` 根治（连续两次构建 27 项产物齐的回归验证）。CI 一直全绿的原因：fresh checkout 没有 tsbuildinfo——"CI 绿"对本地状态泄漏型 bug 是零检出
+- **husky v9 的 prepare 自动挂钩用 fresh clone 实证**：`git clone 本地路径 /tmp/xxx && pnpm install` 后看 `git config core.hooksPath` 是否为 `.husky/_` 且目录已填充。骨架期是手动 `pnpm exec husky` 挂的钩，"新人 clone 后钩子生效吗"一直是悬案；实证 root package.json 的 `"prepare": "husky"` 随 install 自动执行，挂账勾销零改动
+
+### 面试可讲
+
+- **种子数据的完整性也是"clone 即跑"的一部分**：种子 sql 里两行商品 images 指向 /uploads 下的哈希文件名，仓库里却没有这两个文件——每个新环境列表页固定两个 404。修法不是改 sql 抹掉字段（种子就该演示"有图的商品"形态），而是把两张演示图作为仓库资产与种子 sql 同居（`sql/seed-uploads/`），运行时挂第二条静态目录兜底：真实上传优先、种子图兜底、都未命中回标准失败壳。三个环境（本地/docker/CI）零手工步骤，与".env.example 默认值=compose 凭据"是同一决策家族——**默认路径上不允许存在已知的破损**

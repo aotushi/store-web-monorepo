@@ -13,7 +13,9 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
+    // 全局环境类型显式白名单（tsgo 不自动扫 @types，与 tsc 默认不同——同 strictPropertyInitialization 的显式化决策）
+    "types": ["node", "jest"],
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,

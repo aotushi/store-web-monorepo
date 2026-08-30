@@ -19,7 +19,7 @@ import { ProductModule } from "./product/product.module";
 import { RoleModule } from "./role/role.module";
 import { StatsModule } from "./stats/stats.module";
 import { UploadModule } from "./upload/upload.module";
-import { UPLOAD_DIR } from "./upload/upload.constants";
+import { SEED_UPLOAD_DIR, UPLOAD_DIR } from "./upload/upload.constants";
 import { UserModule } from "./user/user.module";
 
 @Module({
@@ -49,11 +49,23 @@ import { UserModule } from "./user/user.module";
     // 定时任务基座（活动状态对账挂 ActivityModule 的 ActivityTasks）
     ScheduleModule.forRoot(),
     // 上传目录静态暴露：serve-static 走 middleware 层，不吃 api 前缀、不过全局守卫（商品图公开可见）
-    ServeStaticModule.forRoot({
-      rootPath: UPLOAD_DIR,
-      serveRoot: "/uploads",
-      serveStaticOptions: { index: false },
-    }),
+    // 两条同挂 /uploads：注册顺序即命中顺序 → 真实上传优先、种子图兜底、都未命中落 Nest 标准 404 壳
+    // renderPath 指到哨兵路径：该库对每条目无条件注册 GET 通配 SPA 回退（sendFile index.html），
+    // 不废掉它请求会被首条目截胡，穿透不到下一条目（express.loader.js 源码验证）
+    ServeStaticModule.forRoot(
+      {
+        rootPath: UPLOAD_DIR,
+        serveRoot: "/uploads",
+        renderPath: "/__spa-fallback-disabled",
+        serveStaticOptions: { index: false },
+      },
+      {
+        rootPath: SEED_UPLOAD_DIR,
+        serveRoot: "/uploads",
+        renderPath: "/__spa-fallback-disabled",
+        serveStaticOptions: { index: false },
+      },
+    ),
     RedisModule,
     HealthModule,
     AuthModule,
